@@ -1,0 +1,11 @@
+{
+    "GemFormatVersion": 3,
+    "Uuid": "b4745a69bade49a3aacc01e4475bdee7",
+    "Name": "AlternativeAudio",
+    "DisplayName": "AlternativeAudio",
+    "Version": "0.1.0",
+    "LinkType": "Dynamic",
+    "Summary": "A system to implement alternative audio systems within lumberyard",
+    "Tags": ["Audio"],
+    "IconPath": "preview.png"
+}

@@ -1,0 +1,20 @@
+{
+  "none": {
+    "Source": [
+      "Source/StdAfx.cpp",
+      "Source/StdAfx.h"
+    ]
+  },
+  "auto": {
+    "Include": [
+      "Include/AlternativeAudio/AlternativeAudioBus.h",
+      "Include/AlternativeAudio/IAudioSource.h",
+      "Include/AlternativeAudio/AudioSourceAsset.h"
+    ],
+    "Source": [
+      "Source/AlternativeAudioModule.cpp",
+      "Source/AlternativeAudioSystemComponent.cpp",
+      "Source/AlternativeAudioSystemComponent.h"
+    ]
+  }
+}
