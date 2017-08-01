@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <AzCore/Component/Component.h>
@@ -29,7 +28,7 @@ namespace AlternativeAudio {
 		IAudioSource * NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata);
 		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetAudioLibraryNames() { return *(this->m_libnames); }
 	protected:
-		void ConvertAudioFrame(AudioFrame::Frame* from, AudioFrame::Frame* to);
+		void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AZ::Uuid inType, AZ::Uuid outType);
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////

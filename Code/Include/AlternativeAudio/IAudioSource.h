@@ -51,19 +51,19 @@ namespace AlternativeAudio {
 		struct af5 : Frame {
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} front;
 				struct {
 					float left;
 					float right;
 				};
 			};
-			float center{ 0.0f };
+			float center;
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} back;
 				struct {
 					float bleft;
@@ -77,26 +77,26 @@ namespace AlternativeAudio {
 		struct af51 : Frame {
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} front;
 				struct {
 					float left;
 					float right;
 				};
 			};
-			float center{ 0.0f };
+			float center;
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} back;
 				struct {
 					float bleft;
 					float bright;
 				};
 			};
-			float sub{ 0.0f };
+			float sub;
 			AZ_RTTI(af51, "{CBBDAA85-7B49-404C-AAB1-6B7C4F30A149}");
 		};
 
@@ -104,19 +104,19 @@ namespace AlternativeAudio {
 		struct af7 : Frame {
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} front;
 				struct {
 					float left;
 					float right;
 				};
 			};
-			float center{ 0.0f };
+			float center;
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} side;
 				struct {
 					float sleft;
@@ -125,8 +125,8 @@ namespace AlternativeAudio {
 			};
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} back;
 				struct {
 					float bleft;
@@ -140,19 +140,19 @@ namespace AlternativeAudio {
 		struct af71 : Frame {
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} front;
 				struct {
 					float left;
 					float right;
 				};
 			};
-			float center{ 0.0f };
+			float center;
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} side;
 				struct {
 					float sleft;
@@ -161,15 +161,15 @@ namespace AlternativeAudio {
 			};
 			union {
 				struct {
-					float left{ 0.0f };
-					float right{ 0.0f };
+					float left;
+					float right;
 				} back;
 				struct {
 					float bleft;
 					float bright;
 				};
 			};
-			float sub{ 0.0f };
+			float sub;
 			AZ_RTTI(af71, "{DA284BAA-F8CD-4F6C-A60A-D60E4208BE7F}");
 		};
 
@@ -195,12 +195,20 @@ namespace AlternativeAudio {
 		double sec{ 0.0 };
 		double totalSec{ 0.0 };
 		AZ_RTTI(AudioSourceTime, "{90F357E5-05D2-4B41-B957-F12B62E28979}");
+
+		int GetHours() { return this->hrs; }
+		int GetMinutes() { return this->minutes; }
+		double GetSeconds() { return this->sec; }
+		double GetTotalSeconds() { return this->totalSec; }
 	};
 
 	struct AudioSourceError {
 		int code{ 0 };
 		const char * str{ "NoError" };
 		AZ_RTTI(AudioSourceError, "{D7705870-4EA0-4DA9-8891-1A728BA56FC4}");
+
+		int GetCode() { return this->code; }
+		const char * GetStr() { return this->str; }
 	};
 
 	enum EAudioSourceFlags {
@@ -244,7 +252,7 @@ namespace AlternativeAudio {
 		virtual const AZ::Uuid& GetFrameType() = 0;
 
 		//returns the length of the audio source in a human readable format.
-		virtual AudioSourceTime GetLength() = 0; //causes errors for some unfathomly stupid reason...
+		virtual AudioSourceTime GetLength() = 0;
 		//returns the length of the audio source in frames.
 		virtual long long GetFrameLength() = 0;
 
@@ -267,7 +275,7 @@ namespace AlternativeAudio {
 		returns what the error is in a human readable format.
 		automatically clears error when there are no more errors to retrieve.
 		*/
-		AudioSourceError GetError() { //causes the same errors as getlength()...
+		AudioSourceError GetError() {
 			if (this->m_errors.size() == 0) {
 				AudioSourceError noErr;
 				this->m_hasError = false;

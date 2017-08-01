@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <AzCore/EBus/EBus.h>
@@ -22,7 +21,7 @@ namespace AlternativeAudio
 		virtual IAudioSource * NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata) = 0;
 		virtual AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetAudioLibraryNames() = 0;
 	public: //audio utilities
-		virtual void ConvertAudioFrame(AudioFrame::Frame* from, AudioFrame::Frame* to) = 0;
+		virtual void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AZ::Uuid inType, AZ::Uuid outType) = 0;
     };
     using AlternativeAudioRequestBus = AZ::EBus<AlternativeAudioRequests>;
 } // namespace AlternativeAudio
