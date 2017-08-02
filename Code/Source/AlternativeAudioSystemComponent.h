@@ -28,7 +28,9 @@ namespace AlternativeAudio {
 		IAudioSource * NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata);
 		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetAudioLibraryNames() { return *(this->m_libnames); }
 	protected:
-		void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AZ::Uuid inType, AZ::Uuid outType);
+		void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len);
+		AudioFrame::Type GetAudioFormat(int numberOfChannels);
+		int GetNumberOfChannels(AudioFrame::Type type);
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////

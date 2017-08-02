@@ -4,51 +4,44 @@
 
 namespace AlternativeAudio {
 	namespace AudioFrame {
-		//base struct, do not use EVER!
-		struct Frame {
-			AZ_RTTI(Frame, "{9747F891-4AC6-4DB3-906D-C3F53B3FBF28}");
-		};
+		//base type
+		typedef void Frame;
 
 		//mono channel
-		struct af1 : Frame {
+		struct af1 {
 			float mono{ 0.0f };
-			AZ_RTTI(af1, "{B76004EE-F9A3-4F52-9996-D61FDD43A4B6}");
 		};
 
 		// 2 channel (left, right) - common
-		struct af2 : Frame {
+		struct af2 {
 			float left{ 0.0f };
 			float right{ 0.0f };
-			AZ_RTTI(af2, "{AF2F4104-FD46-4BEB-8ECD-F07C86E0BA07}");
 		};
 
 		// 2.1 channel (left, right, sub)
-		struct af21 : Frame {
+		struct af21 {
 			float left{ 0.0f };
 			float right{ 0.0f };
 			float sub{ 0.0f };
-			AZ_RTTI(af21, "{CAE0ABB1-3DBB-4C29-B4BB-EB999514F8B3}");
 		};
 
 		// 3 channel (left, right, center)
-		struct af3 : Frame {
+		struct af3 {
 			float left{ 0.0f };
 			float right{ 0.0f };
 			float center{ 0.0f };
-			AZ_RTTI(af3, "{1A505C93-D6A5-4DB2-82EF-E803768C2AE2}");
 		};
 
 		// 3.1 channel (left, right, center, subwoofer)
-		struct af31 : Frame {
+		struct af31 {
 			float left{ 0.0f };
 			float right{ 0.0f };
 			float center{ 0.0f };
 			float sub{ 0.0f };
-			AZ_RTTI(af31, "{73356738-D86B-4CE7-B8B1-7506630C80A2}");
 		};
 
 		// 5 channel (left, right, center, back left, back right)
-		struct af5 : Frame {
+		struct af5 {
 			union {
 				struct {
 					float left;
@@ -70,11 +63,10 @@ namespace AlternativeAudio {
 					float bright;
 				};
 			};
-			AZ_RTTI(af5, "{CD03693F-1979-48F8-AC0A-D3B22E310255}");
 		};
 
 		// 5.1 channel (left, right, center, back left, back right, subwoofer)
-		struct af51 : Frame {
+		struct af51 {
 			union {
 				struct {
 					float left;
@@ -97,11 +89,10 @@ namespace AlternativeAudio {
 				};
 			};
 			float sub;
-			AZ_RTTI(af51, "{CBBDAA85-7B49-404C-AAB1-6B7C4F30A149}");
 		};
 
 		// 7 channel  (left, right, center, side left, side right, back left, back right)
-		struct af7 : Frame {
+		struct af7 {
 			union {
 				struct {
 					float left;
@@ -133,11 +124,10 @@ namespace AlternativeAudio {
 					float bright;
 				};
 			};
-			AZ_RTTI(af7, "{509185CA-CF1D-4F61-95AE-F0A2426AD4A9}");
 		};
 
 		// 7.1 channel (left, right, center, side left, side right, back left, back right, subwoofer)
-		struct af71 : Frame {
+		struct af71 {
 			union {
 				struct {
 					float left;
@@ -170,23 +160,20 @@ namespace AlternativeAudio {
 				};
 			};
 			float sub;
-			AZ_RTTI(af71, "{DA284BAA-F8CD-4F6C-A60A-D60E4208BE7F}");
 		};
 
-		//audio frame types - how many channels an audio frame has
-		/*enum Type {
-			eAFT_None = 0,	//no audio channels - can be an error indicator
-			eAFT_Mono = 1,	// mono - one channel
-			eAFT_2 = 2,		// 2 channels - left, right
-			eAFT_21 = 3,	// 2.1 channels - left, right, subwoofer
-			eAFT_3 = 3,		// 3 channels - left. right, center
-			eAFT_31 = 4,	// 3.1 channels - left, right, center, subwoofer
-			eAFT_5 = 5,		// 5 channels - left, right, center, back left, back right
-			eAFT_51 = 6,	// 5.1 channels - left, right, center, back left, back right, subwoofer
-			eAFT_7 = 7,		// 7 channels - left, right, center, side left, side right, back left, back right
-			eAFT_71 = 8,	// 7.1 channels - left, right, center, side left, side right, back left, back right, subwoofer
-			eAFT_Max = 8	//max audio channels - port audio (and most high end setups) have a max of 8 channels.
-		};*/
+		//audio frame types
+		enum Type {
+			eT_af1,
+			eT_af2,
+			eT_af21,
+			eT_af3,
+			eT_af31,
+			eT_af5,
+			eT_af51,
+			eT_af7,
+			eT_af71
+		};
 	}
 
 	struct AudioSourceTime {
@@ -249,7 +236,7 @@ namespace AlternativeAudio {
 		//returns the audio frame type (how many channels the audio source has).
 		//virtual AudioFrame::Type GetFrameType() = 0;
 		//virtual aztypeid GetFrameType() = 0;
-		virtual const AZ::Uuid& GetFrameType() = 0;
+		virtual const AlternativeAudio::AudioFrame::Type GetFrameType() = 0;
 
 		//returns the length of the audio source in a human readable format.
 		virtual AudioSourceTime GetLength() = 0;
