@@ -8,13 +8,25 @@
   "auto": {
     "Include": [
       "Include/AlternativeAudio/AlternativeAudioBus.h",
+      "Include/AlternativeAudio/IErrorHandler.h",
+      "Include/AlternativeAudio/AudioFrame.h",
       "Include/AlternativeAudio/IAudioSource.h",
+      "Include/AlternativeAudio/IDSPEffect.h",
       "Include/AlternativeAudio/AudioSourceAsset.h"
+    ],
+    "Include/DSP": [
+      "Include/AlternativeAudio/DSP/VolumeDSPBus.h"
     ],
     "Source": [
       "Source/AlternativeAudioModule.cpp",
       "Source/AlternativeAudioSystemComponent.cpp",
       "Source/AlternativeAudioSystemComponent.h"
+    ],
+    "Source/DSP Effects": [
+      "Source/Built-In DSP/VolumeDSP.cpp",
+      "Source/Built-In DSP/VolumeDSP.h",
+      "Source/Built-In DSP/InterlaceDSP.cpp",
+      "Source/Built-In DSP/InterlaceDSP.h"
     ]
   }
 }
