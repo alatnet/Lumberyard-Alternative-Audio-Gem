@@ -97,19 +97,11 @@ namespace AlternativeAudio {
 			if (this->effects.count(slot) == 0) {
 				this->effects[slot] = effect;
 				effect->AddRef();
-
-				//sort based on slot position
-				/*std::sort(this->effects.begin(), this->effects.end(),
-					[](std::pair<unsigned long long, IDSPEffect*>* a, std::pair<unsigned long long, IDSPEffect*>* b) -> bool {
-						return a->first < b->first;
-					}
-				);*/
-
 				return true; //effect has been added
 			}
 			return false; //effect slot in use.
 		}
-		unsigned long long AddEffect(IDSPEffect * effect) {
+		unsigned long long AddEffectFreeSlot(IDSPEffect * effect) {
 			if (this->effects.empty()) {
 				this->effects[0] = effect;
 				effect->AddRef();
@@ -117,15 +109,6 @@ namespace AlternativeAudio {
 			}
 
 			//find an open slot
-
-			//sort based on slot positon
-			/*std::sort(
-				this->effects.begin(),
-				this->effects.end(),
-				[](std::pair<unsigned long long, IDSPEffect*>* a, std::pair<unsigned long long, IDSPEffect*>* b) -> bool {
-					return a->first < b->first;
-				}
-			);*/
 
 			return -1;
 		}

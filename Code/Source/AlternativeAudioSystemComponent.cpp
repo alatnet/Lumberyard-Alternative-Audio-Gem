@@ -114,6 +114,9 @@ namespace AlternativeAudio {
 				->Method("GetFrameType", &IAudioSource::GetFrameType)
 				->Method("GetLength", &IAudioSource::GetLength)
 				->Method("GetFrameLength", &IAudioSource::GetFrameLength)
+				->Method("AddEffect", &IAudioSource::AddEffect)
+				->Method("AddEffectFreeSlot", &IAudioSource::AddEffectFreeSlot)
+				->Method("RemoveEffect", &IAudioSource::RemoveEffect)
 				->Method("SetFlags", &IAudioSource::SetFlags)
 				->Method("GetFlags", &IAudioSource::GetFlags)
 				->Method("HasError", &IAudioSource::HasError)
@@ -263,16 +266,6 @@ namespace AlternativeAudio {
 			if (effect->GetDSPSection() & section) {
 				this->m_dspEffects[sectionInt][slot] = effect;
 				effect->AddRef();
-
-				//sort based on slot position
-				/*std::sort(
-					this->m_dspEffects[section].begin(),
-					this->m_dspEffects[section].end(),
-					[](std::pair<unsigned long long, IDSPEffect*>* a, std::pair<unsigned long long, IDSPEffect*>* b) -> bool {
-						return a->first < b->first;
-					}
-				);*/
-
 				return true; //dsp effect is added to slot specified
 			}
 
@@ -297,15 +290,6 @@ namespace AlternativeAudio {
 		}
 
 		//find an open slot
-
-		//sort based on slot position
-		/*std::sort(
-			this->m_dspEffects[section].begin(),
-			this->m_dspEffects[section].end(),
-			[](std::pair<unsigned long long, IDSPEffect*>* a, std::pair<unsigned long long, IDSPEffect*>* b) -> bool {
-				return a->first < b->first;
-			}
-		);*/
 
 		return -2;
 	}

@@ -49,6 +49,10 @@ namespace AlternativeAudio {
 		virtual long long GetFrameLength() = 0;
 
 	public:
+		bool AddEffect(IDSPEffect * effect, unsigned long long slot) { IDSPEffectHandler::AddEffect(effect, slot); }
+		unsigned long long AddEffectFreeSlot(IDSPEffect * effect) { IDSPEffectHandler::AddEffectFreeSlot(effect); }
+		bool RemoveEffect(unsigned long long slot) { IDSPEffectHandler::RemoveEffect(slot); }
+	public:
 		/*
 		set the flags for the audio source.
 		params:
