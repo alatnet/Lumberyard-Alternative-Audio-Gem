@@ -1510,11 +1510,11 @@ namespace AlternativeAudio {
 	}
 
 	void AlternativeAudioSystemComponent::SetConvertFunction(ConvertAudioFrameFunc convertFunc) {
-		if (convertFunc == nullptr) convertFunc = this->defaultConvert;
+		if (!convertFunc) convertFunc = this->defaultConvert;
 		this->currentConvert = convertFunc;
 	}
 	void AlternativeAudioSystemComponent::SetMixFunction(MixAudioFramesFunc mixFunc) {
-		if (mixFunc == nullptr) mixFunc = this->defaultMix;
+		if (!mixFunc) mixFunc = this->defaultMix;
 		this->currentMix = mixFunc;
 	}
 
