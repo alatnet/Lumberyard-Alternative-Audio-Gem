@@ -1146,15 +1146,15 @@ namespace AlternativeAudio {
 		);
 
 		this->RegisterDSPEffect(
-			"Interleave",
-			AZ_CRC("Interleave"),
+			"AAInterleave",
+			AZ_CRC("AAInterleave"),
 			[&](void* userdata)-> IDSPEffect* { return this->interlaceDSP; } //why create more than one interlace dsp effect?
 			//[](void* userdata) -> IDSPEffect* { return new DSP::InterleaveDSPEffect(userdata); }
 		);
 
 		this->RegisterDSPEffect(
-			"Deinterleave",
-			AZ_CRC("Deinterleave"),
+			"AADeinterleave",
+			AZ_CRC("AADeinterleave"),
 			[&](void* userdata)-> IDSPEffect* { return this->deinterlaceDSP; } //why create more than one deinterlace dsp effect?
 			//[](void* userdata) -> IDSPEffect* { return new DSP::DeinterleaveDSPEffect(userdata); }
 		);
