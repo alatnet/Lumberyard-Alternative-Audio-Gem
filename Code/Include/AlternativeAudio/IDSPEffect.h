@@ -109,8 +109,24 @@ namespace AlternativeAudio {
 			}
 
 			//find an open slot
+			auto end = this->effects.rbegin();
 
-			return -1;
+			unsigned long long open = end->first+1; //store the next open end index
+
+			for (auto it = this->effects.begin(); it != --this->effects.end(); it++) {
+				auto it2 = it;
+				it2++;
+
+				if (it->first+1 != it2->first) {
+					//open slot
+					open = it->first + 1;
+					this->effects[open] = effect;
+					return open;
+				}
+			}
+
+			this->effects[open] = effect; //add effect to end
+			return open;
 		}
 		bool RemoveEffect(unsigned long long slot) {
 			if (this->effects.at(slot) != nullptr) {

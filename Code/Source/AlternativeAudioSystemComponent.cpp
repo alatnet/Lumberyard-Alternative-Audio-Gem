@@ -142,7 +142,7 @@ namespace AlternativeAudio {
 				->Event("GetDSPEffectNames", &AlternativeAudioRequestBus::Events::GetDSPEffectNames)
 				//basic dsp system
 				->Event("AddDSPEffect", &AlternativeAudioRequestBus::Events::AddDSPEffect)
-				//->Event("AddDSPEffectFreeSlot", &AlternativeAudioRequestBus::Events::AddDSPEffectFreeSlot)
+				->Event("AddDSPEffectFreeSlot", &AlternativeAudioRequestBus::Events::AddDSPEffectFreeSlot)
 				->Event("RemoveDSPEffect", &AlternativeAudioRequestBus::Events::RemoveDSPEffect);
 
 			//volume dsp bus
@@ -276,22 +276,38 @@ namespace AlternativeAudio {
 	}
 	unsigned long long AlternativeAudioSystemComponent::AddDSPEffectFreeSlot(DSPSection section, AZ::Crc32 crc, void* userdata) {
 		int sectionInt = GetSection(section);
-		if (this->m_dspEffects[sectionInt].empty()) {
-			IDSPEffect* effect = this->NewDSPEffect(crc, userdata);
 
-			if (effect->GetDSPSection() & section) {
-				this->m_dspEffects[sectionInt][0] = effect;
-				effect->AddRef();
-				return 0;
-			}
-
+		IDSPEffect* effect = this->NewDSPEffect(crc, userdata);
+		if (!(effect->GetDSPSection() & section)) {
 			delete effect;
 			return -1; //dsp is not for this specific dsp section
 		}
 
-		//find an open slot
+		if (this->m_dspEffects[sectionInt].empty()) {
+			this->m_dspEffects[sectionInt][0] = effect;
+			effect->AddRef();
+			return 0;
+		}
 
-		return -2;
+		//find an open slot
+		auto end = this->m_dspEffects[sectionInt].rbegin();
+
+		unsigned long long open = end->first+1; //store the next open end index
+
+		for (auto it = this->m_dspEffects[sectionInt].begin(); it != --this->m_dspEffects[sectionInt].end(); it++) {
+			auto it2 = it;
+			it2++;
+
+			if (it->first + 1 != it2->first) {
+				//open slot
+				open = it->first + 1;
+				this->m_dspEffects[sectionInt][open] = effect;
+				return open;
+			}
+		}
+
+		this->m_dspEffects[sectionInt][open] = effect; //add effect to end
+		return open;
 	}
 
 	IDSPEffect * AlternativeAudioSystemComponent::GetDSPEffect(DSPSection section, unsigned long long slot) {
