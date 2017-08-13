@@ -12,6 +12,957 @@
 #include <AzCore\RTTI\RTTI.h>
 
 namespace AlternativeAudio {
+	AlternativeAudioSystemComponent::AlternativeAudioSystemComponent() {
+		this->defaultConvert = [](AudioFrame::Frame* from, AudioFrame::Frame* to, AudioFrame::Type inType, AudioFrame::Type outType, long long len) -> void {
+			if (inType == AudioFrame::Type::eT_af1) { //Mono to...
+				AudioFrame::af1 *in = (AudioFrame::af1*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1 * ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i<len; i++) ret[i].mono = in[i].mono;
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].sub = in[i].mono;
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].center = in[i].mono;
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].center = in[i].mono;
+						ret[i].sub = in[i].mono;
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].bleft = in[i].mono / 2;
+						ret[i].bright = in[i].mono / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].center = in[i].mono;
+						ret[i].back.left = in[i].mono / 2;
+						ret[i].back.right = in[i].mono / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].center = in[i].mono;
+						ret[i].back.left = in[i].mono / 2;
+						ret[i].back.right = in[i].mono / 2;
+						ret[i].sub = in[i].mono;
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].center = in[i].mono;
+						ret[i].side.left = in[i].mono / 2;
+						ret[i].side.right = in[i].mono / 2;
+						ret[i].back.left = in[i].mono / 3;
+						ret[i].back.right = in[i].mono / 3;
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].mono;
+						ret[i].right = in[i].mono;
+						ret[i].center = in[i].mono;
+						ret[i].side.left = in[i].mono / 2;
+						ret[i].side.right = in[i].mono / 2;
+						ret[i].back.left = in[i].mono / 3;
+						ret[i].back.right = in[i].mono / 3;
+						ret[i].sub = in[i].mono;
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af2) { //2 channels to...
+				AudioFrame::af2 *in = (AudioFrame::af2*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].side.left = in[i].left / 2;
+						ret[i].side.right = in[i].right / 2;
+						ret[i].back.left = in[i].left / 3;
+						ret[i].back.right = in[i].right / 3;
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].side.left = in[i].left / 2;
+						ret[i].side.right = in[i].right / 2;
+						ret[i].back.left = in[i].left / 3;
+						ret[i].back.right = in[i].right / 3;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af21) { //2.1 channels to...
+				AudioFrame::af21 *in = (AudioFrame::af21*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].sub, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].right + in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].right + in[i].left, -1.0f, 1.0f);
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].right + in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp((in[i].left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp((in[i].right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
+						ret[i].side.left = in[i].left / 2;
+						ret[i].side.right = in[i].right / 2;
+						ret[i].back.left = in[i].left / 3;
+						ret[i].back.right = in[i].right / 3;
+						ret[i].sub = in[i].sub;
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af3) { //3 channels to...
+				AudioFrame::af3 *in = (AudioFrame::af3*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2), -1.0f, 1.0f);
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = in[i].left / 2;
+						ret[i].side.right = in[i].right / 2;
+						ret[i].back.left = in[i].left / 3;
+						ret[i].back.right = in[i].right / 3;
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = in[i].left / 2;
+						ret[i].side.right = in[i].right / 2;
+						ret[i].back.left = in[i].left / 3;
+						ret[i].back.right = in[i].right / 3;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af31) { //3.1 channels to...
+				AudioFrame::af31 *in = (AudioFrame::af31*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].sub, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].back.left = in[i].left / 2;
+						ret[i].back.right = in[i].right / 2;
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp((in[i].left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp((in[i].right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = in[i].left / 2;
+						ret[i].side.right = in[i].right / 2;
+						ret[i].back.left = in[i].left / 3;
+						ret[i].back.right = in[i].right / 3;
+						ret[i].sub = in[i].sub;
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af4) { //4 channels to...
+				AudioFrame::af4 *in = (AudioFrame::af4*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af5) { //5 channels to...
+				AudioFrame::af5 *in = (AudioFrame::af5*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2, -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2, -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af51) { //5.1 channels to...
+				AudioFrame::af51 *in = (AudioFrame::af51*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right + in[i].sub, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f) / 2;
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + in[i].sub, -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + in[i].sub, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = in[i].sub;
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af7) { //7 channels to...
+				AudioFrame::af7 *in = (AudioFrame::af7*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].side.left + in[i].side.right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
+						ret[i].sub = (in[i].left + in[i].right + in[i].center + (in[i].side.left / 2) + (in[i].side.right / 2) + (in[i].back.left / 3) + (in[i].back.right / 3), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].side.left / 2) + (in[i].side.right / 2) + (in[i].back.left / 3) + (in[i].back.right / 3), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2, -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2, -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.right / 2), -1.0f, 1.0f);
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].side.left / 2) + (in[i].side.right / 2) + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = in[i].side.left;
+						ret[i].side.right = in[i].side.right;
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = in[i].side.left;
+						ret[i].side.right = in[i].side.right;
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].side.left + in[i].side.right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
+					}
+				}
+			} else if (inType == AudioFrame::Type::eT_af71) { //7.1 channels to...
+				AudioFrame::af71 *in = (AudioFrame::af71*)(from);
+				if (outType == AudioFrame::Type::eT_af1) { //Mono
+					AudioFrame::af1* ret = (AudioFrame::af1*)(to);
+					for (int i = 0; i < len; i++)
+						ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].side.left + in[i].side.right + in[i].back.left + in[i].back.right + in[i].sub, -1.0f, 1.0f);
+				} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
+					AudioFrame::af2* ret = (AudioFrame::af2*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
+					AudioFrame::af21* ret = (AudioFrame::af21*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
+					AudioFrame::af3* ret = (AudioFrame::af3*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
+					AudioFrame::af31* ret = (AudioFrame::af31*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
+					AudioFrame::af4* ret = (AudioFrame::af4*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2) + in[i].sub, -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2) + in[i].sub, -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
+					AudioFrame::af5* ret = (AudioFrame::af5*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
+					AudioFrame::af51* ret = (AudioFrame::af51*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2), -1.0f, 1.0f);
+						ret[i].center = in[i].center;
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.right / 2), -1.0f, 1.0f);
+						ret[i].sub = in[i].sub;
+					}
+				} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
+					AudioFrame::af7* ret = (AudioFrame::af7*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.left = AZ::GetClamp(in[i].side.left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].side.right = AZ::GetClamp(in[i].side.right + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
+						ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
+					}
+				} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
+					AudioFrame::af71* ret = (AudioFrame::af71*)(to);
+					for (int i = 0; i < len; i++) {
+						ret[i].left = in[i].left;
+						ret[i].right = in[i].right;
+						ret[i].center = in[i].center;
+						ret[i].side.left = in[i].side.left;
+						ret[i].side.right = in[i].side.right;
+						ret[i].back.left = in[i].back.left;
+						ret[i].back.right = in[i].back.right;
+						ret[i].sub = in[i].sub;
+					}
+				}
+			}
+		};
+		this->defaultMix = [](AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len) -> void {
+		#define SET_BUFFERS(type) \
+			AlternativeAudio::AudioFrame::##type##* out = (AlternativeAudio::AudioFrame::##type##*)output; \
+			AlternativeAudio::AudioFrame::##type##* src = (AlternativeAudio::AudioFrame::##type##*)source;
+
+		#define SET_CHANNEL(channel) \
+			if (out[i].##channel == 0.0f) out[i].##channel = src[i].##channel; \
+			else out[i].##channel += src[i].##channel; \
+			out[i].##channel = AZ::GetClamp(out[i].##channel, -1.0f, 1.0f);
+
+			if (frameType == AlternativeAudio::AudioFrame::Type::eT_af1) {
+				SET_BUFFERS(af1);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(mono);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af2) {
+				SET_BUFFERS(af2);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af21) {
+				SET_BUFFERS(af21);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(sub);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af3) {
+				SET_BUFFERS(af3);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(center);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af31) {
+				SET_BUFFERS(af31);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(center);
+					SET_CHANNEL(sub);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af4) {
+				SET_BUFFERS(af4);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(bleft);
+					SET_CHANNEL(bright);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af5) {
+				SET_BUFFERS(af5);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(center);
+					SET_CHANNEL(bleft);
+					SET_CHANNEL(bright);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af51) {
+				SET_BUFFERS(af51);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(center);
+					SET_CHANNEL(bleft);
+					SET_CHANNEL(bright);
+					SET_CHANNEL(sub);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af7) {
+				SET_BUFFERS(af7);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(center);
+					SET_CHANNEL(sleft);
+					SET_CHANNEL(sright);
+					SET_CHANNEL(bleft);
+					SET_CHANNEL(bright);
+				}
+			} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af71) {
+				SET_BUFFERS(af71);
+				for (int i = 0; i < len; i++) {
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(center);
+					SET_CHANNEL(sleft);
+					SET_CHANNEL(sright);
+					SET_CHANNEL(bleft);
+					SET_CHANNEL(bright);
+					SET_CHANNEL(sub);
+				}
+			}
+		#undef SET_BUFFERS
+		#undef SET_CHANNEL
+		};
+
+		this->currentConvert = defaultConvert;
+		this->currentMix = defaultMix;
+	}
+
 	AlternativeAudioSystemComponent::~AlternativeAudioSystemComponent() {
 		this->m_sourceLibFuncs->clear();
 		delete this->m_sourceLibFuncs;
@@ -45,6 +996,11 @@ namespace AlternativeAudio {
 				->Version(0)
 				->SerializerForEmptyClass();
 
+			IDSPEffect::Reflect(serialize);
+			DSP::VolumeDSPEffect::Reflect(serialize);
+			DSP::InterleaveDSPEffect::Reflect(serialize);
+			DSP::DeinterleaveDSPEffect::Reflect(serialize);
+
 		#define SerializeEmpty(c) \
 				serialize->Class<##c##>() \
 					->Version(0) \
@@ -53,8 +1009,6 @@ namespace AlternativeAudio {
 			SerializeEmpty(AudioSourceTime);
 			SerializeEmpty(IError);
 			SerializeEmpty(IErrorHandler);
-			SerializeEmpty(IDSPEffect);
-
 		#undef SerializeEmpty
 
 			if (AZ::EditContext* ec = serialize->GetEditContext()) {
@@ -359,856 +1313,6 @@ namespace AlternativeAudio {
 		}
 	}
 	//--------------
-
-	void AlternativeAudioSystemComponent::ConvertAudioFrame(AudioFrame::Frame* from, AudioFrame::Frame* to, AudioFrame::Type inType, AudioFrame::Type outType, long long len) {
-		if (inType == AudioFrame::Type::eT_af1) { //Mono to...
-			AudioFrame::af1 *in = (AudioFrame::af1*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1 * ret = (AudioFrame::af1*)(to);
-				for (int i=0;i<len;i++) ret[i].mono = in[i].mono;
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].sub = in[i].mono;
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].center = in[i].mono;
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].center = in[i].mono;
-					ret[i].sub = in[i].mono;
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].bleft = in[i].mono / 2;
-					ret[i].bright = in[i].mono / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].center = in[i].mono;
-					ret[i].back.left = in[i].mono / 2;
-					ret[i].back.right = in[i].mono / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].center = in[i].mono;
-					ret[i].back.left = in[i].mono / 2;
-					ret[i].back.right = in[i].mono / 2;
-					ret[i].sub = in[i].mono;
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].center = in[i].mono;
-					ret[i].side.left = in[i].mono / 2;
-					ret[i].side.right = in[i].mono / 2;
-					ret[i].back.left = in[i].mono / 3;
-					ret[i].back.right = in[i].mono / 3;
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].mono;
-					ret[i].right = in[i].mono;
-					ret[i].center = in[i].mono;
-					ret[i].side.left = in[i].mono / 2;
-					ret[i].side.right = in[i].mono / 2;
-					ret[i].back.left = in[i].mono / 3;
-					ret[i].back.right = in[i].mono / 3;
-					ret[i].sub = in[i].mono;
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af2) { //2 channels to...
-			AudioFrame::af2 *in = (AudioFrame::af2*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].side.left = in[i].left / 2;
-					ret[i].side.right = in[i].right / 2;
-					ret[i].back.left = in[i].left / 3;
-					ret[i].back.right = in[i].right / 3;
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].side.left = in[i].left / 2;
-					ret[i].side.right = in[i].right / 2;
-					ret[i].back.left = in[i].left / 3;
-					ret[i].back.right = in[i].right / 3;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af21) { //2.1 channels to...
-			AudioFrame::af21 *in = (AudioFrame::af21*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].sub, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].right + in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].right + in[i].left, -1.0f, 1.0f);
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].right + in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp((in[i].left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp((in[i].right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left + in[i].right, -1.0f, 1.0f);
-					ret[i].side.left = in[i].left / 2;
-					ret[i].side.right = in[i].right / 2;
-					ret[i].back.left = in[i].left / 3;
-					ret[i].back.right = in[i].right / 3;
-					ret[i].sub = in[i].sub;
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af3) { //3 channels to...
-			AudioFrame::af3 *in = (AudioFrame::af3*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2), -1.0f, 1.0f);
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = in[i].left / 2;
-					ret[i].side.right = in[i].right / 2;
-					ret[i].back.left = in[i].left / 3;
-					ret[i].back.right = in[i].right / 3;
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = in[i].left / 2;
-					ret[i].side.right = in[i].right / 2;
-					ret[i].back.left = in[i].left / 3;
-					ret[i].back.right = in[i].right / 3;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center, -1.0f, 1.0f);
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af31) { //3.1 channels to...
-			AudioFrame::af31 *in = (AudioFrame::af31*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].sub, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].back.left = in[i].left / 2;
-					ret[i].back.right = in[i].right / 2;
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp((in[i].left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp((in[i].right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = in[i].left / 2;
-					ret[i].side.right = in[i].right / 2;
-					ret[i].back.left = in[i].left / 3;
-					ret[i].back.right = in[i].right / 3;
-					ret[i].sub = in[i].sub;
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af4) { //4 channels to...
-			AudioFrame::af4 *in = (AudioFrame::af4*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = AZ::GetClamp(in[i].left / 2 + in[i].right / 2, -1.0f, 1.0f);
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af5) { //5 channels to...
-			AudioFrame::af5 *in = (AudioFrame::af5*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].back.left / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2, -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2, -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af51) { //5.1 channels to...
-			AudioFrame::af51 *in = (AudioFrame::af51*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].back.left + in[i].back.right + in[i].sub, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f) / 2;
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + in[i].sub, -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + in[i].sub, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = AZ::GetClamp((in[i].left / 2) + (in[i].back.left / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp((in[i].right / 2) + (in[i].back.right / 2), -1.0f, 1.0f);
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = in[i].sub;
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af7) { //7 channels to...
-			AudioFrame::af7 *in = (AudioFrame::af7*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].side.left + in[i].side.right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
-					ret[i].sub = (in[i].left + in[i].right + in[i].center + (in[i].side.left / 2) + (in[i].side.right / 2) + (in[i].back.left / 3) + (in[i].back.right / 3), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].side.left / 2) + (in[i].side.right / 2) + (in[i].back.left / 3) + (in[i].back.right / 3), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2, -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2, -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.right / 2), -1.0f, 1.0f);
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + (in[i].side.left / 2) + (in[i].side.right / 2) + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = in[i].side.left;
-					ret[i].side.right = in[i].side.right;
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = in[i].side.left;
-					ret[i].side.right = in[i].side.right;
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].side.left + in[i].side.right + in[i].back.left + in[i].back.right, -1.0f, 1.0f);
-				}
-			}
-		} else if (inType == AudioFrame::Type::eT_af71) { //7.1 channels to...
-			AudioFrame::af71 *in = (AudioFrame::af71*)(from);
-			if (outType == AudioFrame::Type::eT_af1) { //Mono
-				AudioFrame::af1* ret = (AudioFrame::af1*)(to);
-				for (int i = 0; i < len; i++)
-					ret[i].mono = AZ::GetClamp(in[i].left + in[i].right + in[i].center + in[i].side.left + in[i].side.right + in[i].back.left + in[i].back.right + in[i].sub, -1.0f, 1.0f);
-			} else if (outType == AudioFrame::Type::eT_af2) { //2 channels
-				AudioFrame::af2* ret = (AudioFrame::af2*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af21) { //2.1 channels
-				AudioFrame::af21* ret = (AudioFrame::af21*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].center / 2) + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].center / 2) + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af3) { //3 channels
-				AudioFrame::af3* ret = (AudioFrame::af3*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af31) { //3.1 channels
-				AudioFrame::af31* ret = (AudioFrame::af31*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].back.left / 3), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].back.right / 3), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af4) { //4 channels
-				AudioFrame::af4* ret = (AudioFrame::af4*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + in[i].center / 2 + in[i].sub, -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2) + in[i].sub, -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2) + in[i].sub, -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af5) { //5 channels
-				AudioFrame::af5* ret = (AudioFrame::af5*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.left / 2) + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af51) { //5.1 channels
-				AudioFrame::af51* ret = (AudioFrame::af51*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].side.right / 2), -1.0f, 1.0f);
-					ret[i].center = in[i].center;
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].side.left / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].side.right / 2), -1.0f, 1.0f);
-					ret[i].sub = in[i].sub;
-				}
-			} else if (outType == AudioFrame::Type::eT_af7) { //7 channels
-				AudioFrame::af7* ret = (AudioFrame::af7*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = AZ::GetClamp(in[i].left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].right = AZ::GetClamp(in[i].right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].center = AZ::GetClamp(in[i].center + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.left = AZ::GetClamp(in[i].side.left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].side.right = AZ::GetClamp(in[i].side.right + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.left = AZ::GetClamp(in[i].back.left + (in[i].sub / 2), -1.0f, 1.0f);
-					ret[i].back.right = AZ::GetClamp(in[i].back.right + (in[i].sub / 2), -1.0f, 1.0f);
-				}
-			} else if (outType == AudioFrame::Type::eT_af71) { //7.1 channels
-				AudioFrame::af71* ret = (AudioFrame::af71*)(to);
-				for (int i = 0; i < len; i++) {
-					ret[i].left = in[i].left;
-					ret[i].right = in[i].right;
-					ret[i].center = in[i].center;
-					ret[i].side.left = in[i].side.left;
-					ret[i].side.right = in[i].side.right;
-					ret[i].back.left = in[i].back.left;
-					ret[i].back.right = in[i].back.right;
-					ret[i].sub = in[i].sub;
-				}
-			}
-		}
-	}
-
 	int AlternativeAudioSystemComponent::GetNumberOfChannels(AudioFrame::Type type) {
 		if (type == AudioFrame::Type::eT_af1) return 1;
 		else if (type == AudioFrame::Type::eT_af2) return 2;
@@ -1244,104 +1348,6 @@ namespace AlternativeAudio {
 		}
 
 		return AudioFrame::Type::eT_af1;
-	}
-
-	void AlternativeAudioSystemComponent::MixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len){
-#		define SET_BUFFERS(type) \
-			AlternativeAudio::AudioFrame::##type##* out = (AlternativeAudio::AudioFrame::##type##*)output; \
-			AlternativeAudio::AudioFrame::##type##* src = (AlternativeAudio::AudioFrame::##type##*)source;
-
-#		define SET_CHANNEL(channel) \
-			if (out[i].##channel == 0.0f) out[i].##channel = src[i].##channel; \
-			else out[i].##channel += src[i].##channel; \
-			out[i].##channel = AZ::GetClamp(out[i].##channel, -1.0f, 1.0f);
-
-		if (frameType == AlternativeAudio::AudioFrame::Type::eT_af1) {
-			SET_BUFFERS(af1);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(mono);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af2) {
-			SET_BUFFERS(af2);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af21) {
-			SET_BUFFERS(af21);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(sub);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af3) {
-			SET_BUFFERS(af3);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(center);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af31) {
-			SET_BUFFERS(af31);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(center);
-				SET_CHANNEL(sub);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af4) {
-			SET_BUFFERS(af4);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(bleft);
-				SET_CHANNEL(bright);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af5) {
-			SET_BUFFERS(af5);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(center);
-				SET_CHANNEL(bleft);
-				SET_CHANNEL(bright);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af51) {
-			SET_BUFFERS(af51);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(center);
-				SET_CHANNEL(bleft);
-				SET_CHANNEL(bright);
-				SET_CHANNEL(sub);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af7) {
-			SET_BUFFERS(af7);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(center);
-				SET_CHANNEL(sleft);
-				SET_CHANNEL(sright);
-				SET_CHANNEL(bleft);
-				SET_CHANNEL(bright);
-			}
-		} else if (frameType == AlternativeAudio::AudioFrame::Type::eT_af71) {
-			SET_BUFFERS(af71);
-			for (int i = 0; i < len; i++) {
-				SET_CHANNEL(left);
-				SET_CHANNEL(right);
-				SET_CHANNEL(center);
-				SET_CHANNEL(sleft);
-				SET_CHANNEL(sright);
-				SET_CHANNEL(bleft);
-				SET_CHANNEL(bright);
-				SET_CHANNEL(sub);
-			}
-		}
-#		undef SET_BUFFERS
-#		undef SET_CHANNEL
 	}
 	////////////////////////////////////////////////////////////////////////
 }

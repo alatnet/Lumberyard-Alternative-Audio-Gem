@@ -10,13 +10,16 @@ namespace AlternativeAudio
 	typedef AZStd::function<IAudioSource* (const char *, void*)> NewAudioSourceFunc;
 	typedef AZStd::function<IDSPEffect* (void*)> NewDSPEffectFunc;
 
+	typedef AZStd::function<void (AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len)> ConvertAudioFrameFunc;
+	typedef AZStd::function<void (AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len)> MixAudioFramesFunc;
+
 	class AlternativeAudioRequests
         : public AZ::EBusTraits
     {
     public:
         static const AZ::EBusHandlerPolicy HandlerPolicy = AZ::EBusHandlerPolicy::Single;
         static const AZ::EBusAddressPolicy AddressPolicy = AZ::EBusAddressPolicy::Single;
-        // Public functions                                         
+        // Public functions
 	public: //basic audio library system
 		virtual void RegisterAudioLibrary(AZStd::string libname, AZ::Crc32 crc, AZStd::vector<AZStd::string> filetypes, NewAudioSourceFunc ptr) = 0;
 		virtual IAudioSource * NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata) = 0;
@@ -31,11 +34,19 @@ namespace AlternativeAudio
 		virtual IDSPEffect * GetDSPEffect(DSPSection section, unsigned long long slot) = 0;
 		virtual bool RemoveDSPEffect(DSPSection section, unsigned long long slot) = 0;
 		virtual void ProcessDSPEffects(DSPSection section, AudioFrame::Type format, float* buffer, long long len) = 0;
-	public: //audio utilities
+	public: //frame conversion
 		virtual void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len) = 0;
+		virtual void DefaultConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len) = 0;
+		virtual void SetConvertFunction(ConvertAudioFrameFunc convertFunc) = 0;
+		virtual void ResetConvertFunction() = 0; //reset to default Alternative Audio frame conversion function.
+	public: //frame mixing
+		virtual void MixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len) = 0;
+		virtual void DefaultMixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len) = 0;
+		virtual void SetMixFunction(MixAudioFramesFunc mixFunc) = 0;
+		virtual void ResetMixFunction() = 0; //reset to default Alternative Audio mixing function.
+	public: //audio utilities
 		virtual AudioFrame::Type GetAudioFormat(int numberOfChannels) = 0;
 		virtual int GetNumberOfChannels(AudioFrame::Type type) = 0;
-		virtual void MixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len) = 0;
     };
     using AlternativeAudioRequestBus = AZ::EBus<AlternativeAudioRequests>;
 } // namespace AlternativeAudio

@@ -10,6 +10,7 @@ namespace AlternativeAudio {
 		: public AZ::Component
 		, protected AlternativeAudioRequestBus::Handler {
 	public:
+		AlternativeAudioSystemComponent();
 		~AlternativeAudioSystemComponent();
 	public:
 		AZ_COMPONENT(AlternativeAudioSystemComponent, "{8C2C3BF1-C34E-4BEC-B299-A9AAC5276511}");
@@ -38,11 +39,19 @@ namespace AlternativeAudio {
 		IDSPEffect * GetDSPEffect(DSPSection section, unsigned long long slot);
 		bool RemoveDSPEffect(DSPSection section, unsigned long long slot);
 		void ProcessDSPEffects(DSPSection section, AudioFrame::Type format, float* buffer, long long len);
+	protected: //frame conversion
+		void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len) { this->currentConvert(in, out, inType, outType, len); }
+		void DefaultConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len) { this->defaultConvert(in, out, inType, outType, len); }
+		void SetConvertFunction(ConvertAudioFrameFunc convertFunc) { this->currentConvert = convertFunc; }
+		void ResetConvertFunction() { this->currentConvert = this->defaultConvert; }
+	protected: //frame mixing
+		void MixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len) { this->currentMix(output, source, frameType, len); }
+		void DefaultMixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len) { this->defaultMix(output, source, frameType, len); }
+		void SetMixFunction(MixAudioFramesFunc mixFunc) { this->currentMix = mixFunc; }
+		void ResetMixFunction() { this->currentMix = this->defaultMix; }
 	protected: //audio utilities
-		void ConvertAudioFrame(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len); //change this to a customizable function?
 		AudioFrame::Type GetAudioFormat(int numberOfChannels);
 		int GetNumberOfChannels(AudioFrame::Type type);
-		void MixAudioFrames(AudioFrame::Frame* output, AudioFrame::Frame* source, AudioFrame::Type frameType, long long len);
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////
@@ -64,5 +73,8 @@ namespace AlternativeAudio {
 	private:
 		DSP::InterleaveDSPEffect *interlaceDSP;
 		DSP::DeinterleaveDSPEffect *deinterlaceDSP;
+	private:
+		ConvertAudioFrameFunc defaultConvert, currentConvert;
+		MixAudioFramesFunc defaultMix, currentMix;
 	};
 }

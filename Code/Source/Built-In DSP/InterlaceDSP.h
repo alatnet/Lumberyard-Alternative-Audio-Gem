@@ -9,6 +9,7 @@ namespace AlternativeAudio{
 		public:
 			AZ_RTTI(InterleaveDSPEffect, "{F91C23F1-D0FA-4CDA-9B02-4F3C19B8AFBE}");
 		public:
+			InterleaveDSPEffect() {}
 			InterleaveDSPEffect(void* userdata) {}
 		public:
 			AZStd::string GetName() { return "Interlace"; }
@@ -18,6 +19,12 @@ namespace AlternativeAudio{
 		public:
 			int GetDSPSection() { return eDS_PerSource_BC | eDS_PerSource_AC | eDS_PerSource_ARS | eDS_Output; }
 			DSP_ProcessType GetProcessType() { return eDPT_Buffer; }
+		public:
+			static void Reflect(AZ::SerializeContext* serialize) {
+				serialize->Class<InterleaveDSPEffect, IDSPEffect>()
+					->Version(0)
+					->SerializerForEmptyClass();
+			}
 		};
 
 		class DeinterleaveDSPEffect
@@ -25,6 +32,7 @@ namespace AlternativeAudio{
 		public:
 			AZ_RTTI(DeinterleaveDSPEffect, "{42EAC2FA-70EF-4B08-8DDC-1F8244F6AD16}");
 		public:
+			DeinterleaveDSPEffect() {}
 			DeinterleaveDSPEffect(void* userdata) {}
 		public:
 			AZStd::string GetName() { return "Deinterlace"; }
@@ -34,6 +42,12 @@ namespace AlternativeAudio{
 		public:
 			int GetDSPSection() { return eDS_PerSource_BC | eDS_PerSource_AC | eDS_PerSource_ARS | eDS_Output; }
 			DSP_ProcessType GetProcessType() { return eDPT_Buffer; }
+		public:
+			static void Reflect(AZ::SerializeContext* serialize) {
+				serialize->Class<DeinterleaveDSPEffect, IDSPEffect>()
+					->Version(0)
+					->SerializerForEmptyClass();
+			}
 		};
 	}
 }

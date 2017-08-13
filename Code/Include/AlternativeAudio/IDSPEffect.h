@@ -1,5 +1,6 @@
 #pragma once
 
+#include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\IErrorHandler.h>
 #include <AlternativeAudio\AudioFrame.h>
@@ -87,6 +88,12 @@ namespace AlternativeAudio {
 	public:
 		void AddRef() { _i_reference_target_t::AddRef(); }
 		void Release() { _i_reference_target_t::Release(); }
+	public:
+		static void Reflect(AZ::SerializeContext* serialize) {
+			serialize->Class<IDSPEffect>()
+				->Version(0)
+				->SerializerForEmptyClass();
+		}
 	};
 
 	class IDSPEffectHandler {

@@ -4,6 +4,11 @@
 
 namespace AlternativeAudio{
     namespace DSP {
+		VolumeDSPEffect::VolumeDSPEffect() {
+			this->m_vol = 1.0f;
+			VolumeDSPBus::Handler::BusConnect(this);
+		}
+
 		VolumeDSPEffect::VolumeDSPEffect(void* userdata) {
 			this->m_vol = 1.0f;
 			VolumeDSPBus::Handler::BusConnect(this);
