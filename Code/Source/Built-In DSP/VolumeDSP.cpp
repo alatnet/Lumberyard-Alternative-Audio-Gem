@@ -99,6 +99,19 @@ namespace AlternativeAudio{
 				}
 			}
 				break;
+			case AudioFrame::Type::eT_af41:
+			{
+				SET_BUFFERS(af41);
+				for (long long i = 0; i < len; i++) {
+					//this->ProcessFrame(format, (float*)&out[i]);
+					SET_CHANNEL(left);
+					SET_CHANNEL(right);
+					SET_CHANNEL(bleft);
+					SET_CHANNEL(bright);
+					SET_CHANNEL(sub);
+				}
+			}
+				break;
             case AudioFrame::Type::eT_af5:
 			{
 				SET_BUFFERS(af5);
@@ -263,7 +276,7 @@ namespace AlternativeAudio{
                 break;
             case AudioFrame::Type::eT_af4:
 			{
-				SET_BUFFERS(af5);
+				SET_BUFFERS(af4);
 				SET_CHANNEL(left);
 				SET_CHANNEL(right);
 				SET_CHANNEL(bleft);
@@ -279,7 +292,29 @@ namespace AlternativeAudio{
 				out->left = result.m128_f32[0];
 				out->right = result.m128_f32[1];
 				out->bleft = result.m128_f32[2];
-				out->bright = result.m128_f32[3];
+				out->bright = result.m128_f32[3];*/
+			}
+                break;
+            case AudioFrame::Type::eT_af41:
+			{
+				SET_BUFFERS(af41);
+				SET_CHANNEL(left);
+				SET_CHANNEL(right);
+				SET_CHANNEL(bleft);
+				SET_CHANNEL(bright);
+				SET_CHANNEL(sub);
+
+				/*__m128 channels;
+				channels.m128_f32[0] = out->left;
+				channels.m128_f32[1] = out->right;
+				channels.m128_f32[2] = out->bleft;
+				channels.m128_f32[3] = out->bright;
+
+				__m128 result = _mm_mul_ps(channels, m_simd_vol);
+				out->left = result.m128_f32[0];
+				out->right = result.m128_f32[1];
+				out->bleft = result.m128_f32[2];
+				out->bright = result.m128_f32[3];*/
 			}
                 break;
 			case AudioFrame::Type::eT_af5:

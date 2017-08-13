@@ -38,7 +38,7 @@ namespace AlternativeAudio {
 			float sub{ 0.0f };
 		};
 		
-		//4 channel (front left, front right, back left, back right
+		//4 channel (front left, front right, back left, back right)
 		struct af4 {
 			union {
 				struct {
@@ -60,6 +60,31 @@ namespace AlternativeAudio {
 					float bright;
 				};
 			};
+		};
+
+		//4 channel (front left, front right, back left, back right, subwoofer)
+		struct af41 {
+			union {
+				struct {
+					float left;
+					float right;
+				} front;
+				struct {
+					float left;
+					float right;
+				};
+			};
+			union {
+				struct {
+					float left;
+					float right;
+				} back;
+				struct {
+					float bleft;
+					float bright;
+				};
+			};
+			float sub;
 		};
 
 		// 5 channel (left, right, center, back left, back right)
@@ -200,6 +225,7 @@ namespace AlternativeAudio {
 			eT_af3,
 			eT_af31,
 			eT_af4,
+			eT_af41,
 			eT_af5,
 			eT_af51,
 			eT_af7,
@@ -252,6 +278,30 @@ namespace AlternativeAudio {
 						float * bright;
 					};
 				};
+			};
+
+			struct af41 {
+				union {
+					struct {
+						float * left;
+						float * right;
+					} front;
+					struct {
+						float * left;
+						float * right;
+					};
+				};
+				union {
+					struct {
+						float * left;
+						float * right;
+					} back;
+					struct {
+						float * bleft;
+						float * bright;
+					};
+				};
+				float * sub;
 			};
 			
 			struct af5 {

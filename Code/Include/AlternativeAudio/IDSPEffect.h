@@ -88,12 +88,6 @@ namespace AlternativeAudio {
 	public:
 		void AddRef() { _i_reference_target_t::AddRef(); }
 		void Release() { _i_reference_target_t::Release(); }
-	public:
-		static void Reflect(AZ::SerializeContext* serialize) {
-			serialize->Class<IDSPEffect>()
-				->Version(0)
-				->SerializerForEmptyClass();
-		}
 	};
 
 	class IDSPEffectHandler {
@@ -165,6 +159,8 @@ namespace AlternativeAudio {
 						CASE_FORMAT(af21)
 						CASE_FORMAT(af3)
 						CASE_FORMAT(af31)
+						CASE_FORMAT(af4)
+						CASE_FORMAT(af41)
 						CASE_FORMAT(af5)
 						CASE_FORMAT(af51)
 						CASE_FORMAT(af7)

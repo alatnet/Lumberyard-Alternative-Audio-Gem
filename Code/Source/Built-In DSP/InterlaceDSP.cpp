@@ -79,6 +79,21 @@ namespace AlternativeAudio {
 				delete in;
 			}
 			break;
+			case AudioFrame::Type::eT_af41:
+			{
+				SET_BUFFER(af41);
+
+				for (long long i = 0; i < len; i++) {
+					COPY_CHANNEL(left);
+					COPY_CHANNEL(right);
+					COPY_CHANNEL(bleft);
+					COPY_CHANNEL(bright);
+					COPY_CHANNEL(sub);
+				}
+
+				delete in;
+			}
+			break;
 			case AudioFrame::Type::eT_af5:
 			{
 				SET_BUFFER(af5);
@@ -214,6 +229,20 @@ namespace AlternativeAudio {
 					COPY_CHANNEL(right);
 					COPY_CHANNEL(bleft);
 					COPY_CHANNEL(bright);
+				}
+
+				delete in;
+			}
+			break;
+			case AudioFrame::Type::eT_af41:
+			{
+				SET_BUFFER(af41);
+				for (long long i = 0; i < len; i++) {
+					COPY_CHANNEL(left);
+					COPY_CHANNEL(right);
+					COPY_CHANNEL(bleft);
+					COPY_CHANNEL(bright);
+					COPY_CHANNEL(sub);
 				}
 
 				delete in;
