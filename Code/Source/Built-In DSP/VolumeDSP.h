@@ -1,12 +1,12 @@
 #pragma once
 
-#include "AlternativeAudio\IDSPEffect.h"
+#include "AlternativeAudio\DSP\AADSPEffect.h"
 #include "AlternativeAudio\DSP\VolumeDSPBus.h"
 
 namespace AlternativeAudio{
     namespace DSP {
         class VolumeDSPEffect
-			: public IDSPEffect
+			: public AADSPEffect
 			, public VolumeDSPBus::Handler {
         public:
             AZ_RTTI(VolumeDSP, "{8ECA20AB-1A49-4572-A119-26FE5904E87A}");
@@ -15,7 +15,7 @@ namespace AlternativeAudio{
 			VolumeDSPEffect(void* userdata);
 			~VolumeDSPEffect();
 		public:
-			AZStd::string GetName() { return "Default Volume Control"; }
+			AZStd::string GetName() { return "AAVolumeControl"; }
         public:
             void SetVol(float vol);
             float GetVol() { return this->m_vol; }
@@ -24,10 +24,10 @@ namespace AlternativeAudio{
             void ProcessFrame(AudioFrame::Type format, float * frame);
 		public:
 			int GetDSPSection() { return eDS_PerSource_BC | eDS_PerSource_AC | eDS_PerSource_ARS | eDS_Output; }
-			DSP_ProcessType GetProcessType() { return eDPT_Buffer; }
+			AADSPProcessType GetProcessType() { return eDPT_Buffer; }
 		public:
 			static void Reflect(AZ::SerializeContext* serialize) {
-				serialize->Class<VolumeDSPEffect, IDSPEffect>()
+				serialize->Class<VolumeDSPEffect, AADSPEffect>()
 					->Version(1)
 					->Field("vol",&VolumeDSPEffect::m_vol);
 			}

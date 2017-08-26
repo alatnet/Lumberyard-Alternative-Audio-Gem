@@ -8,14 +8,24 @@
   "auto": {
     "Include": [
       "Include/AlternativeAudio/AlternativeAudioBus.h",
-      "Include/AlternativeAudio/IErrorHandler.h",
-      "Include/AlternativeAudio/AudioFrame.h",
-      "Include/AlternativeAudio/IAudioSource.h",
-      "Include/AlternativeAudio/IDSPEffect.h",
-      "Include/AlternativeAudio/AudioSourceAsset.h"
+      "Include/AlternativeAudio/AAErrorHandler.h",
+      "Include/AlternativeAudio/AAAudioFrame.h",
+      "Include/AlternativeAudio/AudioSourceAsset.h",
+      "Include/AlternativeAudio/AAFlagHandler.h",
+      "Include/AlternativeAudio/AASmartRef.h"
+    ],
+    "Include/Audio Source": [
+      "Include/AlternativeAudio/AudioSource/IAudioSource.h"
+    ],
+    "Include/Device": [
+      "Include/AlternativeAudio/Device/OAudioDevice.h"
+    ],
+    "Include/DSP Effects": [
+      "Include/AlternativeAudio/DSP/VolumeDSPBus.h"
     ],
     "Include/DSP": [
-      "Include/AlternativeAudio/DSP/VolumeDSPBus.h"
+      "Include/AlternativeAudio/DSP/AADSPEffect.h",
+      "Include/AlternativeAudio/DSP/AADSPEffectHandler.h"
     ],
     "Source": [
       "Source/AlternativeAudioModule.cpp",

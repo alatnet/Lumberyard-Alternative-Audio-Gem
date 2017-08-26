@@ -1,5 +1,9 @@
 #pragma once
 
+#include <AzCore/Serialization/SerializeContext.h>
+#include <AzCore/RTTI/BehaviorContext.h>
+#include <AzCore\RTTI\RTTI.h>
+
 namespace AlternativeAudio {
     namespace AudioFrame {
 		//base type
@@ -26,15 +30,15 @@ namespace AlternativeAudio {
 		// 3 channel (left, right, center)
 		struct af3 {
 			float left{ 0.0f };
-			float right{ 0.0f };
 			float center{ 0.0f };
+			float right{ 0.0f };
 		};
 
 		// 3.1 channel (left, right, center, subwoofer)
 		struct af31 {
 			float left{ 0.0f };
-			float right{ 0.0f };
 			float center{ 0.0f };
+			float right{ 0.0f };
 			float sub{ 0.0f };
 		};
 		
@@ -246,14 +250,14 @@ namespace AlternativeAudio {
 
 			struct af3 {
 				float * left{ nullptr };
-				float * right{ nullptr };
 				float * center{ nullptr };
+				float * right{ nullptr };
 			};
 
 			struct af31 {
 				float * left{ nullptr };
-				float * right{ nullptr };
 				float * center{ nullptr };
+				float * right{ nullptr };
 				float * sub{ nullptr };
 			};
 
@@ -443,12 +447,26 @@ namespace AlternativeAudio {
 		int GetMinutes() { return this->minutes; }
 		double GetSeconds() { return this->sec; }
 		double GetTotalSeconds() { return this->totalSec; }
+
+		static void Reflect(AZ::SerializeContext* serialize) {
+			serialize->Class<AudioSourceTime>()
+				->Version(0)
+				->SerializerForEmptyClass();
+		}
+
+		static void Behavior(AZ::BehaviorContext* behaviorContext) {
+			behaviorContext->Class<AudioSourceTime>("AAAudioSourceTime")
+				->Method("GetHours", &AudioSourceTime::GetHours)
+				->Method("GetMinutes", &AudioSourceTime::GetMinutes)
+				->Method("GetSeconds", &AudioSourceTime::GetSeconds)
+				->Method("GetTotalSeconds", &AudioSourceTime::GetTotalSeconds);
+		}
 	};
 
-	enum EAudioSourceFlags {
+	enum AASourceFlags {
 		eAF_None = 0,
 		eAF_Loop = 1 << 0,
-		eAF_LoopSection = 1 << 1,
+		eAF_LoopSection = 1 << 1, //not used at the moment
 		eAF_PausedOnStart = 1 << 2
 	};
 }

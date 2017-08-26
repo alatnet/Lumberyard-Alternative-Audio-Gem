@@ -1154,6 +1154,10 @@ namespace AlternativeAudio {
 
 		this->currentConvert = defaultConvert;
 		this->currentMix = defaultMix;
+
+		this->m_MasterDevice = nullptr;
+		this->m_NullDeviceInfo = AZStd::vector<OAudioDeviceInfo>(0);
+		this->m_NullDeviceInfo.shrink_to_fit();
 	}
 
 	AlternativeAudioSystemComponent::~AlternativeAudioSystemComponent() {
@@ -1169,13 +1173,19 @@ namespace AlternativeAudio {
 		this->m_dspLibNames->clear();
 		delete this->m_dspLibNames;
 
-		for (int i = 0; i < eDS_Count; i++) {
-			for (std::pair<unsigned long long, IDSPEffect *> effect : this->m_dspEffects[i])
-				//delete effect.second;
-				effect.second->Release();
-			this->m_dspEffects[i].clear();
-		}
-		delete[] this->m_dspEffects;
+		this->m_deviceProviders->clear();
+		delete this->m_deviceProviders;
+
+		this->m_deviceLibNames->clear();
+		delete this->m_deviceLibNames;
+
+		//for (int i = 0; i < eDS_Count; i++) {
+		//	for (std::pair<unsigned long long, AADSPEffect *> effect : this->m_dspEffects[i])
+		//		//delete effect.second;
+		//		effect.second->Release();
+		//	this->m_dspEffects[i].clear();
+		//}
+		//delete[] this->m_dspEffects;
 
 		//delete this->interlaceDSP;
 		//delete this->deinterlaceDSP;
@@ -1183,27 +1193,43 @@ namespace AlternativeAudio {
 		this->deinterlaceDSP->Release();
 	}
 
+	/*
+	public:
+		static void Reflect(AZ::SerializeContext* serialize) {
+			serialize->Class<>()
+				->Version(0)
+				->SerializerForEmptyClass();
+		}
+
+		static void Behavior(AZ::BehaviorContext* behaviorContext) {
+		}
+	*/
+
 	void AlternativeAudioSystemComponent::Reflect(AZ::ReflectContext* context) {
 		if (AZ::SerializeContext* serialize = azrtti_cast<AZ::SerializeContext*>(context)) {
+			//reflection
 			serialize->Class<AlternativeAudioSystemComponent, AZ::Component>()
 				->Version(0)
 				->SerializerForEmptyClass();
 
-		#define SerializeEmpty(c) \
-			serialize->Class<##c##>() \
-				->Version(0) \
-				->SerializerForEmptyClass()
-
-			SerializeEmpty(AudioSourceTime);
-			SerializeEmpty(IError);
-			SerializeEmpty(IErrorHandler);
-			SerializeEmpty(IDSPEffect);
-		#undef SerializeEmpty
-
+			//class reflection
+			AASmartRef::Reflect(serialize);
+			AAError::Reflect(serialize);
+			AAErrorHandler::Reflect(serialize);
+			AAFlagHandler::Reflect(serialize);
+			AudioSourceTime::Reflect(serialize);
+			AADSPEffect::Reflect(serialize);
+			AADSPEffectHandler::Reflect(serialize);
+			AADSPDeviceEffectHandler::Reflect(serialize);
+			IAudioSource::Reflect(serialize);
 			DSP::VolumeDSPEffect::Reflect(serialize);
 			DSP::InterleaveDSPEffect::Reflect(serialize);
 			DSP::DeinterleaveDSPEffect::Reflect(serialize);
+			OAudioDeviceInfo::Reflect(serialize);
+			OAudioDevice::Reflect(serialize);
+			OAudioDeviceProvider::Reflect(serialize);
 
+			//edit context
 			if (AZ::EditContext* ec = serialize->GetEditContext()) {
 				ec->Class<AlternativeAudioSystemComponent>("AlternativeAudio", "Provides an alternative audio system for usage in lumberyard.")
 					->ClassElement(AZ::Edit::ClassElements::EditorData, "")
@@ -1216,29 +1242,30 @@ namespace AlternativeAudio {
 
 		AZ::BehaviorContext* behaviorContext = azrtti_cast<AZ::BehaviorContext*>(context);
 		if (behaviorContext) {
-			behaviorContext->Class<AlternativeAudioSystemComponent>("AlternativeAudio")
-				->Enum<EAudioSourceFlags::eAF_Loop>("eAF_Loop")
-				->Enum<EAudioSourceFlags::eAF_LoopSection>("eAF_LoopSection")
-				->Enum<EAudioSourceFlags::eAF_PausedOnStart>("eAF_PausedOnStart")
-				->Enum<DSPSection::eDS_PerSource_BC>("eDS_PerSource_BC")
-				->Enum<DSPSection::eDS_PerSource_AC>("eDS_PerSource_AC")
-				->Enum<DSPSection::eDS_PerSource_ARS>("eDS_PerSource_ARS")
-				->Enum<DSPSection::eDS_Output>("eDS_Output")
-				->Enum<DSP_ProcessType::eDPT_Buffer>("eDPT_Buffer")
-				->Enum<DSP_ProcessType::eDPT_Frame>("eDPT_Frame");
+			///constants and enums
+			behaviorContext->Class<AlternativeAudioSystemComponent>("AASystem")
+				->Enum<AADSPSection::eDS_PerSource_BC>("eDS_PerSource_BC")
+				->Enum<AADSPSection::eDS_PerSource_AC>("eDS_PerSource_AC")
+				->Enum<AADSPSection::eDS_PerSource_ARS>("eDS_PerSource_ARS")
+				->Enum<AADSPSection::eDS_Output>("eDS_Output")
+				->Enum<AADSPProcessType::eDPT_Buffer>("eDPT_Buffer")
+				->Enum<AADSPProcessType::eDPT_Frame>("eDPT_Frame")
+				->Enum<AASourceFlags::eAF_Loop>("eAF_Loop")
+				->Enum<AASourceFlags::eAF_LoopSection>("eAF_LoopSection")
+				->Enum<AASourceFlags::eAF_PausedOnStart>("eAF_PausedOnStart")
+				->Enum<AAResampleQuality::eAARQ_Best>("eAARQ_Best")
+				->Enum<AAResampleQuality::eAARQ_Medium>("eAARQ_Medium")
+				->Enum<AAResampleQuality::eAARQ_Fastest>("eAARQ_Fastest")
+				->Enum<AAResampleQuality::eAARQ_Zero_Order_Hold>("eAARQ_Zero_Order_Hold")
+				->Enum<AAResampleQuality::eAARQ_Linear>("eAARQ_Linear")
+				->Enum<AAResampleQuality::eAARQ_Misc0>("eAARQ_Misc0")
+				->Enum<AAResampleQuality::eAARQ_Misc1>("eAARQ_Misc1")
+				->Enum<AAResampleQuality::eAARQ_Misc2>("eAARQ_Misc2")
+				->Enum<AAResampleQuality::eAARQ_Misc3>("eAARQ_Misc3")
+				->Enum<AAResampleQuality::eAARQ_Misc4>("eAARQ_Misc4");
 
-			behaviorContext->Class<AudioSourceTime>("AudioSourceTime")
-				->Method("GetHours", &AudioSourceTime::GetHours)
-				->Method("GetMinutes", &AudioSourceTime::GetMinutes)
-				->Method("GetSeconds", &AudioSourceTime::GetSeconds)
-				->Method("GetTotalSeconds", &AudioSourceTime::GetTotalSeconds);
-
-			behaviorContext->Class<IError>("IError")
-				->Method("GetCode", &IError::GetCode)
-				->Method("GetStr", &IError::GetStr);
-
-			//audio frame types
-			behaviorContext->Class<AudioFrame::Type>("AudioFrame")
+			///audio frame types
+			behaviorContext->Class<AudioFrame::Type>("AAAudioFrame")
 				->Enum<AudioFrame::Type::eT_af1>("af1")
 				->Enum<AudioFrame::Type::eT_af2>("af2")
 				->Enum<AudioFrame::Type::eT_af21>("af21")
@@ -1251,51 +1278,67 @@ namespace AlternativeAudio {
 				->Enum<AudioFrame::Type::eT_af7>("af7")
 				->Enum<AudioFrame::Type::eT_af71>("af71");
 
-			//DSP Sections
-			//behaviorContext->Class<DSPSection>("DSPSection")
+			///Methods
+			AudioSourceTime::Behavior(behaviorContext); //time
+			AASmartRef::Behavior(behaviorContext); //smart reference
 
-			//DSP Process types
-			//behaviorContext->Class<DSP_ProcessType>("DSPProcessType");
+			//errors
+			AAError::Behavior(behaviorContext);
+			AAErrorHandler::Behavior(behaviorContext);
 
-			//audio source
-			behaviorContext->Class<IAudioSource>("IAudioSource")
-				->Method("GetSampleRate", &IAudioSource::GetSampleRate)
-				->Method("GetFrameType", &IAudioSource::GetFrameType)
-				->Method("GetLength", &IAudioSource::GetLength)
-				->Method("GetFrameLength", &IAudioSource::GetFrameLength)
-				->Method("AddEffect", &IAudioSource::AddEffect)
-				->Method("AddEffectFreeSlot", &IAudioSource::AddEffectFreeSlot)
-				->Method("RemoveEffect", &IAudioSource::RemoveEffect)
-				->Method("SetFlags", &IAudioSource::SetFlags)
-				->Method("GetFlags", &IAudioSource::GetFlags)
-				->Method("HasError", &IAudioSource::HasError)
-				->Method("GetError", &IAudioSource::GetError);
+			AAFlagHandler::Behavior(behaviorContext); //flag
+			IAudioSource::Behavior(behaviorContext); //audio source
 
 			//dsp effect
-			behaviorContext->Class<IDSPEffect>("IDSPEffect")
-				->Method("GetName", &IDSPEffect::GetName)
-				->Method("GetDSPSection", &IDSPEffect::GetDSPSection)
-				->Method("GetProcessType", &IDSPEffect::GetProcessType)
-				->Method("AddRef", &IDSPEffect::AddRef)
-				->Method("Release", &IDSPEffect::Release)
-				->Method("HasError", &IDSPEffect::HasError)
-				->Method("GetError", &IDSPEffect::GetError);
+			AADSPEffect::Behavior(behaviorContext);
+			AADSPEffectHandler::Behavior(behaviorContext);
+			AADSPDeviceEffectHandler::Behavior(behaviorContext);
 
-			//alternative audio bus
-			behaviorContext->EBus<AlternativeAudioRequestBus>("AlternativeAudioBus")
+			//output device
+			OAudioDeviceInfo::Behavior(behaviorContext);
+			OAudioDevice::Behavior(behaviorContext);
+			OAudioDeviceProvider::Behavior(behaviorContext);
+
+			///Buses
+			//Alternative Audio EBus
+			behaviorContext->EBus<AlternativeAudioSourceBus>("AlternativeAudioSourceBus")
 				//basic audio library system
-				->Event("NewAudioSource", &AlternativeAudioRequestBus::Events::NewAudioSource)
-				->Event("GetAudioLibraryNames", &AlternativeAudioRequestBus::Events::GetAudioLibraryNames)
-				//basic dsp library system
-				->Event("NewDSPEffect", &AlternativeAudioRequestBus::Events::NewDSPEffect)
-				->Event("GetDSPEffectNames", &AlternativeAudioRequestBus::Events::GetDSPEffectNames)
-				//basic dsp system
-				->Event("AddDSPEffect", &AlternativeAudioRequestBus::Events::AddDSPEffect)
-				->Event("AddDSPEffectFreeSlot", &AlternativeAudioRequestBus::Events::AddDSPEffectFreeSlot)
-				->Event("RemoveDSPEffect", &AlternativeAudioRequestBus::Events::RemoveDSPEffect);
+				->Event("NewAudioSource", &AlternativeAudioSourceBus::Events::NewAudioSource)
+				->Event("GetAudioLibraryNames", &AlternativeAudioSourceBus::Events::GetAudioLibraryNames);
 
-			//volume dsp bus
-			behaviorContext->EBus<DSP::VolumeDSPBus>("VolumeDSPBus")
+			//DSP Ebus
+			behaviorContext->EBus<AlternativeAudioDSPBus>("AlternativeAudioDSPBus")
+				//basic dsp library system
+				->Event("NewDSPEffect", &AlternativeAudioDSPBus::Events::NewDSPEffect)
+				->Event("GetDSPEffectNames", &AlternativeAudioDSPBus::Events::GetDSPEffectNames)
+				//basic dsp system
+				->Event("AddEffect", &AlternativeAudioDSPBus::Events::AddEffect)
+				->Event("AddEffectFreeSlot", &AlternativeAudioDSPBus::Events::AddEffectFreeSlot)
+				->Event("GetEffect", &AlternativeAudioDSPBus::Events::GetEffect)
+				->Event("RemoveEffect", &AlternativeAudioDSPBus::Events::RemoveEffect);
+
+			//Audio Device bus
+			behaviorContext->EBus<AlternativeAudioDeviceBus>("AlternativeAudioDeviceBus")
+				->Event("NewDevice", &AlternativeAudioDeviceBus::Events::NewDevice)
+				->Event("GetPlaybackLibraryNames", &AlternativeAudioDeviceBus::Events::GetPlaybackLibraryNames)
+				->Event("GetPlaybackDevices", &AlternativeAudioDeviceBus::Events::GetPlaybackDevices)
+				->Event("GetDefaultPlaybackDevice", &AlternativeAudioDeviceBus::Events::GetDefaultPlaybackDevice)
+				->Event("GetDeviceProvider", &AlternativeAudioDeviceBus::Events::GetDeviceProvider)
+				//----
+				->Event("SetMasterDevice", &AlternativeAudioDeviceBus::Events::SetMasterDevice)
+				->Event("SetStream", &AlternativeAudioDeviceBus::Events::SetStream)
+				->Event("SetResampleQuality", &AlternativeAudioDeviceBus::Events::SetResampleQuality)
+				->Event("GetDeviceInfo", &AlternativeAudioDeviceBus::Events::GetDeviceInfo)
+				->Event("PlaySource", &AlternativeAudioDeviceBus::Events::PlaySource)
+				->Event("PauseSource", &AlternativeAudioDeviceBus::Events::PauseSource)
+				->Event("ResumeSource", &AlternativeAudioDeviceBus::Events::ResumeSource)
+				->Event("StopSource", &AlternativeAudioDeviceBus::Events::StopSource)
+				->Event("IsPlaying", &AlternativeAudioDeviceBus::Events::IsPlaying)
+				->Event("GetTime", &AlternativeAudioDeviceBus::Events::GetTime)
+				->Event("SetTime", &AlternativeAudioDeviceBus::Events::SetTime);
+
+			//volume dsp Ebus
+			behaviorContext->EBus<DSP::VolumeDSPBus>("AAVolumeDSPBus")
 				->Event("SetVol", &DSP::VolumeDSPBus::Events::SetVol)
 				->Event("GetVol", &DSP::VolumeDSPBus::Events::GetVol);
 		}
@@ -1323,46 +1366,53 @@ namespace AlternativeAudio {
 
 		this->m_dspLibFuncs = new AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc>();
 		this->m_dspLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
+
+		this->m_deviceProviders = new AZStd::unordered_map<AZ::Crc32, OAudioDeviceProvider*>();
+		this->m_deviceLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
 		
-		//this->m_dspEffects = new AZStd::unordered_map<unsigned long long, IDSPEffect *>[eDS_Count];
-		this->m_dspEffects = new std::map<unsigned long long, IDSPEffect *>[eDS_Count];
+		////this->m_dspEffects = new AZStd::unordered_map<unsigned long long, AADSPEffect *>[eDS_Count];
+		//this->m_dspEffects = new std::map<unsigned long long, AADSPEffect *>[eDS_Count];
 
 		this->interlaceDSP = new DSP::InterleaveDSPEffect(nullptr);
 		this->interlaceDSP->AddRef();
 		this->deinterlaceDSP = new DSP::DeinterleaveDSPEffect(nullptr);
 		this->deinterlaceDSP->AddRef();
-	}
 
-	void AlternativeAudioSystemComponent::Activate() {
 		this->RegisterDSPEffect(
 			"AAVolumeControl",
 			AZ_CRC("AAVolumeControl"),
-			[](void* userdata)-> IDSPEffect* { return new DSP::VolumeDSPEffect(userdata); }
+			[](void* userdata)-> AADSPEffect* { return new DSP::VolumeDSPEffect(userdata); }
 		);
 
 		this->RegisterDSPEffect(
 			"AAInterleave",
 			AZ_CRC("AAInterleave"),
-			[&](void* userdata)-> IDSPEffect* { return this->interlaceDSP; } //why create more than one interlace dsp effect?
-			//[](void* userdata) -> IDSPEffect* { return new DSP::InterleaveDSPEffect(userdata); }
+			[&](void* userdata)-> AADSPEffect* { return this->interlaceDSP; } //why create more than one interlace dsp effect?
 		);
 
 		this->RegisterDSPEffect(
 			"AADeinterleave",
 			AZ_CRC("AADeinterleave"),
-			[&](void* userdata)-> IDSPEffect* { return this->deinterlaceDSP; } //why create more than one deinterlace dsp effect?
-			//[](void* userdata) -> IDSPEffect* { return new DSP::DeinterleaveDSPEffect(userdata); }
+			[&](void* userdata)-> AADSPEffect* { return this->deinterlaceDSP; } //why create more than one deinterlace dsp effect?
 		);
+	}
 
+	void AlternativeAudioSystemComponent::Activate() {
 		AlternativeAudioRequestBus::Handler::BusConnect();
+		AlternativeAudioSourceBus::Handler::BusConnect();
+		AlternativeAudioDSPBus::Handler::BusConnect();
+		AlternativeAudioDeviceBus::Handler::BusConnect();
 	}
 
 	void AlternativeAudioSystemComponent::Deactivate() {
 		AlternativeAudioRequestBus::Handler::BusDisconnect();
+		AlternativeAudioSourceBus::Handler::BusDisconnect();
+		AlternativeAudioDSPBus::Handler::BusDisconnect();
+		AlternativeAudioDeviceBus::Handler::BusDisconnect();
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	// AlternativeAudioRequestBus interface implementation
+	// AlternativeAudioSourceBus interface implementation
 	//--------------
 	//IAudioSource
 	void AlternativeAudioSystemComponent::RegisterAudioLibrary(AZStd::string libname, AZ::Crc32 crc, AZStd::vector<AZStd::string> filetypes, NewAudioSourceFunc ptr) {
@@ -1376,22 +1426,119 @@ namespace AlternativeAudio {
 		if (funcEntry != this->m_sourceLibFuncs->end()) return funcEntry->second(path, userdata);
 		return nullptr;
 	}
-	//--------------
+	////////////////////////////////////////////////////////////////////////
 	
-	//--------------
-	//IDSPEffect
+	////////////////////////////////////////////////////////////////////////
+	// AlternativeAudioDSPBus
 	void AlternativeAudioSystemComponent::RegisterDSPEffect(AZStd::string libname, AZ::Crc32 crc, NewDSPEffectFunc ptr) {
 		this->m_dspLibFuncs->insert({ crc, ptr });
 		this->m_dspLibNames->push_back({ libname, crc });
 	}
-	IDSPEffect * AlternativeAudioSystemComponent::NewDSPEffect(AZ::Crc32 crc, void* userdata) {
+	AADSPEffect * AlternativeAudioSystemComponent::NewDSPEffect(AZ::Crc32 crc, void* userdata) {
 		auto funcEntry = this->m_dspLibFuncs->find(crc);
 		if (funcEntry != this->m_dspLibFuncs->end()) return funcEntry->second(userdata);
 		return nullptr;
 	}
 	//--------------
 
-	int GetSection(DSPSection section) {
+	bool AlternativeAudioSystemComponent::AddEffect(AADSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot) {
+		AADSPEffect * effect = this->NewDSPEffect(crc, userdata);
+		if (effect != nullptr) {
+			if (AADSPDeviceEffectHandler::AddEffect(section, effect, slot)) return true;
+			delete effect;
+		}
+		return false;
+	}
+	unsigned long long AlternativeAudioSystemComponent::AddEffectFreeSlot(AADSPSection section, AZ::Crc32 crc, void* userdata) {
+		AADSPEffect * effect = this->NewDSPEffect(crc, userdata);
+		if (effect != nullptr) {
+			unsigned long long ret = AADSPDeviceEffectHandler::AddEffectFreeSlot(section, effect);
+			if (ret >= 0) return ret;
+			delete effect;
+			return ret;
+		}
+		return -3;
+	}
+	////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////
+	// AlternativeAudioDeviceBus
+	void AlternativeAudioSystemComponent::RegisterPlaybackLibrary(AZStd::string libname, AZ::Crc32 crc, OAudioDeviceProvider* ptr) {
+		this->m_deviceProviders->insert({ crc, ptr });
+		this->m_deviceLibNames->push_back({ libname, crc });
+	}
+	OAudioDevice * AlternativeAudioSystemComponent::NewDevice(AZ::Crc32 crc, long long device, double samplerate, AlternativeAudio::AudioFrame::Type audioFormat, void* userdata) {
+		auto providerEntry = this->m_deviceProviders->find(crc);
+		if (providerEntry != this->m_deviceProviders->end()) return providerEntry->second->NewDevice(device, samplerate, audioFormat, userdata);
+		return nullptr;
+	}
+
+	AZStd::vector<OAudioDeviceInfo>& AlternativeAudioSystemComponent::GetPlaybackDevices(AZ::Crc32 playbackLib) {
+		auto providerEntry = this->m_deviceProviders->find(playbackLib);
+		if (providerEntry != this->m_deviceProviders->end()) return providerEntry->second->GetDevices();
+		return this->m_NullDeviceInfo;
+	}
+
+	long long AlternativeAudioSystemComponent::GetDefaultPlaybackDevice(AZ::Crc32 playbackLib) {
+		auto providerEntry = this->m_deviceProviders->find(playbackLib);
+		if (providerEntry != this->m_deviceProviders->end()) return providerEntry->second->GetDefaultDevice();
+		return -1;
+	}
+
+	OAudioDeviceProvider* AlternativeAudioSystemComponent::GetDeviceProvider(AZ::Crc32 playbackLib) {
+		auto providerEntry = this->m_deviceProviders->find(playbackLib);
+		if (providerEntry != this->m_deviceProviders->end()) return providerEntry->second;
+		return &(this->m_nullProvider);
+	}
+	//---------
+
+	void AlternativeAudioSystemComponent::SetMasterDevice(OAudioDevice * device) {
+		if (device) device->AddRef();
+		if (this->m_MasterDevice) this->m_MasterDevice->Release();
+		this->m_MasterDevice = device;
+	}
+
+	#define IF_DEVICE if (this->m_MasterDevice) this->m_MasterDevice
+	#define IF_DEVICE_RET if (this->m_MasterDevice) return this->m_MasterDevice
+	void AlternativeAudioSystemComponent::SetStream(double samplerate, AudioFrame::Type audioFormat, void * userdata) {
+		IF_DEVICE->SetStream(samplerate, audioFormat, userdata);
+	}
+	void AlternativeAudioSystemComponent::SetResampleQuality(AAResampleQuality quality) {
+		IF_DEVICE->SetResampleQuality(quality);
+	}
+	OAudioDeviceInfo AlternativeAudioSystemComponent::GetDeviceInfo() {
+		IF_DEVICE_RET->GetDeviceInfo();
+		return OAudioDeviceInfo();
+	}
+	long long AlternativeAudioSystemComponent::PlaySource(IAudioSource * source) {
+		IF_DEVICE_RET->PlaySource(source);
+		return -1;
+	}
+	void AlternativeAudioSystemComponent::PauseSource(long long id) {
+		IF_DEVICE->PauseSource(id);
+	}
+	void AlternativeAudioSystemComponent::ResumeSource(long long id) {
+		IF_DEVICE->ResumeSource(id);
+	}
+	void AlternativeAudioSystemComponent::StopSource(long long id) {
+		IF_DEVICE->StopSource(id);
+	}
+	bool AlternativeAudioSystemComponent::IsPlaying(long long id) {
+		IF_DEVICE_RET->IsPlaying(id);
+		return false;
+	}
+	AudioSourceTime AlternativeAudioSystemComponent::GetTime(long long id) {
+		IF_DEVICE_RET->GetTime(id);
+		return AudioSourceTime();
+	}
+	void AlternativeAudioSystemComponent::SetTime(long long id, double time) {
+		IF_DEVICE->SetTime(id, time);
+	}
+	#undef IF_DEVICE
+	#undef IF_DEVICE_RET
+	////////////////////////////////////////////////////////////////////////
+
+	/*int GetSection(DSPSection section) {
 		switch (section) {
 		case eDS_PerSource_BC:
 			return 0;
@@ -1403,112 +1550,115 @@ namespace AlternativeAudio {
 			return 3;
 		}
 		return 0;
-	}
+	}*/
 
 	//--------------
 	//basic DSP system
-	bool AlternativeAudioSystemComponent::AddDSPEffect(DSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot) {
-		int sectionInt = GetSection(section);
-		if (this->m_dspEffects[sectionInt].count(slot) == 0) {
-			IDSPEffect* effect = this->NewDSPEffect(crc, userdata);
+	//bool AlternativeAudioSystemComponent::AddDSPEffect(DSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot) {
+	//	int sectionInt = GetSection(section);
+	//	if (this->m_dspEffects[sectionInt].count(slot) == 0) {
+	//		AADSPEffect* effect = this->NewDSPEffect(crc, userdata);
 
-			if (effect->GetDSPSection() & section) {
-				this->m_dspEffects[sectionInt][slot] = effect;
-				effect->AddRef();
-				return true; //dsp effect is added to slot specified
-			}
+	//		if (effect->GetDSPSection() & section) {
+	//			this->m_dspEffects[sectionInt][slot] = effect;
+	//			effect->AddRef();
+	//			return true; //dsp effect is added to slot specified
+	//		}
 
-			delete effect;
-			return false; //dsp effect is not suited for section specified
-		}
-		return false; //slot already has a dsp effect.
-	}
-	unsigned long long AlternativeAudioSystemComponent::AddDSPEffectFreeSlot(DSPSection section, AZ::Crc32 crc, void* userdata) {
-		int sectionInt = GetSection(section);
+	//		delete effect;
+	//		return false; //dsp effect is not suited for section specified
+	//	}
+	//	return false; //slot already has a dsp effect.
+	//}
+	//unsigned long long AlternativeAudioSystemComponent::AddDSPEffectFreeSlot(DSPSection section, AZ::Crc32 crc, void* userdata) {
+	//	int sectionInt = GetSection(section);
 
-		IDSPEffect* effect = this->NewDSPEffect(crc, userdata);
-		if (!(effect->GetDSPSection() & section)) {
-			delete effect;
-			return -1; //dsp is not for this specific dsp section
-		}
+	//	AADSPEffect* effect = this->NewDSPEffect(crc, userdata);
+	//	effect->AddRef();
+	//	if (!(effect->GetDSPSection() & section)) {
+	//		//delete effect;
+	//		effect->Release();
+	//		return -1; //dsp is not for this specific dsp section
+	//	}
 
-		if (this->m_dspEffects[sectionInt].empty()) {
-			this->m_dspEffects[sectionInt][0] = effect;
-			effect->AddRef();
-			return 0;
-		}
+	//	if (this->m_dspEffects[sectionInt].empty()) {
+	//		this->m_dspEffects[sectionInt][0] = effect;
+	//		//effect->AddRef();
+	//		return 0;
+	//	}
 
-		//find an open slot
-		auto end = this->m_dspEffects[sectionInt].rbegin();
+	//	//find an open slot
+	//	auto end = this->m_dspEffects[sectionInt].rbegin();
 
-		unsigned long long open = end->first+1; //store the next open end index
+	//	unsigned long long open = end->first+1; //store the next open end index
 
-		for (auto it = this->m_dspEffects[sectionInt].begin(); it != --this->m_dspEffects[sectionInt].end(); it++) {
-			auto it2 = it;
-			it2++;
+	//	for (auto it = this->m_dspEffects[sectionInt].begin(); it != --this->m_dspEffects[sectionInt].end(); it++) {
+	//		auto it2 = it;
+	//		it2++;
 
-			if (it->first + 1 != it2->first) {
-				//open slot
-				open = it->first + 1;
-				this->m_dspEffects[sectionInt][open] = effect;
-				return open;
-			}
-		}
+	//		if (it->first + 1 != it2->first) {
+	//			//open slot
+	//			open = it->first + 1;
+	//			this->m_dspEffects[sectionInt][open] = effect;
+	//			return open;
+	//		}
+	//	}
 
-		this->m_dspEffects[sectionInt][open] = effect; //add effect to end
-		return open;
-	}
+	//	this->m_dspEffects[sectionInt][open] = effect; //add effect to end
+	//	return open;
+	//}
 
-	IDSPEffect * AlternativeAudioSystemComponent::GetDSPEffect(DSPSection section, unsigned long long slot) {
-		int sectionInt = GetSection(section);
-		return this->m_dspEffects[sectionInt].at(slot);
-	}
+	//AADSPEffect * AlternativeAudioSystemComponent::GetDSPEffect(DSPSection section, unsigned long long slot) {
+	//	int sectionInt = GetSection(section);
+	//	return this->m_dspEffects[sectionInt].at(slot);
+	//}
 
-	bool AlternativeAudioSystemComponent::RemoveDSPEffect(DSPSection section, unsigned long long slot) {
-		int sectionInt = GetSection(section);
-		if (this->m_dspEffects[sectionInt].at(slot) != nullptr) {
-			//delete this->m_dspEffects[section][slot];
-			this->m_dspEffects[sectionInt][slot]->Release();
-			this->m_dspEffects[sectionInt].erase(slot);
-			return true; //dsp effect removed.
-		}
-		return false; //there is no dsp effect in slot specified
-	}
-	void AlternativeAudioSystemComponent::ProcessDSPEffects(DSPSection section, AudioFrame::Type format, float* buffer, long long len) {
-		int sectionInt = GetSection(section);
-		for (std::pair<unsigned long long, IDSPEffect *> effect : this->m_dspEffects[sectionInt]) {
-			switch (effect.second->GetProcessType()) {
-			case eDPT_Buffer:
-				effect.second->Process(format, buffer, len);
-				break;
-			case eDPT_Frame:
+	//bool AlternativeAudioSystemComponent::RemoveDSPEffect(DSPSection section, unsigned long long slot) {
+	//	int sectionInt = GetSection(section);
+	//	if (this->m_dspEffects[sectionInt].at(slot) != nullptr) {
+	//		//delete this->m_dspEffects[section][slot];
+	//		this->m_dspEffects[sectionInt][slot]->Release();
+	//		this->m_dspEffects[sectionInt].erase(slot);
+	//		return true; //dsp effect removed.
+	//	}
+	//	return false; //there is no dsp effect in slot specified
+	//}
+	//void AlternativeAudioSystemComponent::ProcessDSPEffects(DSPSection section, AudioFrame::Type format, float* buffer, long long len) {
+	//	int sectionInt = GetSection(section);
+	//	for (std::pair<unsigned long long, AADSPEffect *> effect : this->m_dspEffects[sectionInt]) {
+	//		switch (effect.second->GetProcessType()) {
+	//		case eDPT_Buffer:
+	//			effect.second->Process(format, buffer, len);
+	//			break;
+	//		case eDPT_Frame:
 
-				#define CASE_FORMAT(Format) \
-					case AlternativeAudio::AudioFrame::Type::eT_##Format##: \
-					{ \
-						AlternativeAudio::AudioFrame::##Format##* buff = (AlternativeAudio::AudioFrame::##Format##*)buffer; \
-						for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i]); \
-					}
+	//			#define CASE_FORMAT(Format) \
+	//				case AlternativeAudio::AudioFrame::Type::eT_##Format##: \
+	//				{ \
+	//					AlternativeAudio::AudioFrame::##Format##* buff = (AlternativeAudio::AudioFrame::##Format##*)buffer; \
+	//					for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i]); \
+	//				}
 
-				switch (format) {
-					CASE_FORMAT(af1)
-					CASE_FORMAT(af2)
-					CASE_FORMAT(af21)
-					CASE_FORMAT(af3)
-					CASE_FORMAT(af31)
-					CASE_FORMAT(af4)
-					CASE_FORMAT(af41)
-					CASE_FORMAT(af5)
-					CASE_FORMAT(af51)
-					CASE_FORMAT(af7)
-					CASE_FORMAT(af71)
-				}
-				break;
-				#undef CASE_FORMAT
-			}
-		}
-	}
-
+	//			switch (format) {
+	//				CASE_FORMAT(af1)
+	//				CASE_FORMAT(af2)
+	//				CASE_FORMAT(af21)
+	//				CASE_FORMAT(af3)
+	//				CASE_FORMAT(af31)
+	//				CASE_FORMAT(af4)
+	//				CASE_FORMAT(af41)
+	//				CASE_FORMAT(af5)
+	//				CASE_FORMAT(af51)
+	//				CASE_FORMAT(af7)
+	//				CASE_FORMAT(af71)
+	//			}
+	//			break;
+	//			#undef CASE_FORMAT
+	//		}
+	//	}
+	//}
+	
+	//--------------
 	void AlternativeAudioSystemComponent::SetConvertFunction(ConvertAudioFrameFunc convertFunc) {
 		if (!convertFunc) convertFunc = this->defaultConvert;
 		this->currentConvert = convertFunc;
