@@ -2,8 +2,10 @@
 
 #include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore/RTTI/BehaviorContext.h>
+#include <AzCore/RTTI/TypeInfo.h>
 #include <AzCore\RTTI\RTTI.h>
 
+//#define BIT(x)  1 << x
 namespace AlternativeAudio {
     namespace AudioFrame {
 		//base type
@@ -459,14 +461,39 @@ namespace AlternativeAudio {
 				->Method("GetHours", &AudioSourceTime::GetHours)
 				->Method("GetMinutes", &AudioSourceTime::GetMinutes)
 				->Method("GetSeconds", &AudioSourceTime::GetSeconds)
-				->Method("GetTotalSeconds", &AudioSourceTime::GetTotalSeconds);
+				->Method("GetTotalSeconds", &AudioSourceTime::GetTotalSeconds)
+				->Constant("hrs", &AudioSourceTime::GetHours)
+				->Constant("minutes", &AudioSourceTime::GetMinutes)
+				->Constant("sec", &AudioSourceTime::GetSeconds)
+				->Constant("totalSec", &AudioSourceTime::GetTotalSeconds);
 		}
 	};
 
+	#define RESERVED_BIT(id,bit) eAF_Reserved##id = BIT64(##bit##)
 	enum AASourceFlags {
 		eAF_None = 0,
-		eAF_Loop = 1 << 0,
-		eAF_LoopSection = 1 << 1, //not used at the moment
-		eAF_PausedOnStart = 1 << 2
+		eAF_Loop = BIT64(0),
+		eAF_LoopSection = BIT64(1), //not used at the moment
+		eAF_PausedOnStart = BIT64(2),
+		eAF_Deinterlaced = BIT64(3),
+		RESERVED_BIT(0, 4),
+		RESERVED_BIT(1, 5),
+		RESERVED_BIT(2, 6),
+		RESERVED_BIT(3, 7),
+		RESERVED_BIT(4, 8),
+		RESERVED_BIT(5, 9),
+		RESERVED_BIT(6, 10),
+		RESERVED_BIT(7, 11),
+		RESERVED_BIT(8, 12),
+		RESERVED_BIT(9, 13),
+		RESERVED_BIT(10, 14),
+		RESERVED_BIT(11, 15)
 	};
+	#undef RESERVED_BIT
 }
+
+namespace AZ {
+	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AudioFrame::Type, "{3E6C2625-1D4B-4C84-99A8-C063ACB651EA}");
+	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AASourceFlags, "{E298EE6D-F4D7-47E8-A413-4F959A4816A4}");
+}
+//#undef BIT

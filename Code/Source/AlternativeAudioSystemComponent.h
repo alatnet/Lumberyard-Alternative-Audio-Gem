@@ -68,7 +68,7 @@ namespace AlternativeAudio {
 		unsigned long long AddEffectFreeSlot(AADSPSection section, AZ::Crc32 crc, void* userdata);
 		AADSPEffect * GetEffect(AADSPSection section, unsigned long long slot) { return AADSPDeviceEffectHandler::GetEffect(section, slot); }
 		bool RemoveEffect(AADSPSection section, unsigned long long slot) { return AADSPDeviceEffectHandler::RemoveEffect(section, slot); }
-		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len) { AADSPDeviceEffectHandler::ProcessEffects(section, format, buffer, len); }
+		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) { AADSPDeviceEffectHandler::ProcessEffects(section, format, buffer, len, flags); }
 		AADSPDeviceEffectHandler* GetDSPDeviceEffectHandler() { return (AADSPDeviceEffectHandler*)this; }
 	private: //AADSPEffect
 		AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc> *m_dspLibFuncs;

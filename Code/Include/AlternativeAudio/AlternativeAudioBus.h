@@ -65,7 +65,7 @@ namespace AlternativeAudio {
 		virtual unsigned long long AddEffectFreeSlot(AADSPSection section, AZ::Crc32 crc, void* userdata) = 0;
 		virtual AADSPEffect * GetEffect(AADSPSection section, unsigned long long slot) = 0;
 		virtual bool RemoveEffect(AADSPSection section, unsigned long long slot) = 0;
-		virtual void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len) = 0;
+		virtual void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) = 0;
 		virtual AADSPDeviceEffectHandler* GetDSPDeviceEffectHandler() = 0;
 	};
 	using AlternativeAudioDSPBus = AZ::EBus<AlternativeAudioDSPRequests>;

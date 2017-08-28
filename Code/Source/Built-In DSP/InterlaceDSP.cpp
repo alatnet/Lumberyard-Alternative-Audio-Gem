@@ -4,7 +4,9 @@
 
 namespace AlternativeAudio {
     namespace DSP {
-		void InterleaveDSPEffect::Process(AudioFrame::Type format, float * buffer, long long len) {
+		void InterleaveDSPEffect::Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags) {
+			if (!(flags->GetFlags() & AASourceFlags::eAF_Deinterlaced)) return; //if we are not deinterlaced
+
 #			define SET_BUFFER(type) \
 				AudioFrame::Deinterlaced::##type##* in = new AudioFrame::Deinterlaced::##type##[len]; \
 				memcpy(in, buffer, len * sizeof(AudioFrame::##type##) / 4); \
@@ -23,6 +25,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af21:
@@ -36,6 +39,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af3:
@@ -49,6 +53,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af31:
@@ -63,6 +68,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af4:
@@ -77,6 +83,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af41:
@@ -92,6 +99,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af5:
@@ -107,6 +115,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af51:
@@ -123,6 +132,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af7:
@@ -140,6 +150,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af71:
@@ -158,6 +169,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() & ~AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			}
@@ -165,7 +177,9 @@ namespace AlternativeAudio {
 #			undef COPY_CHANNEL
 		}
 		//----------------------------------------------
-		void DeinterleaveDSPEffect::Process(AudioFrame::Type format, float * buffer, long long len) {
+		void DeinterleaveDSPEffect::Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags) {
+			if (flags->GetFlags() & AASourceFlags::eAF_Deinterlaced) return; //we are already deinterlaced
+
 #			define SET_BUFFER(type) \
 				AudioFrame::##type##* in = new AudioFrame::##type##[len]; \
 				memcpy(in, buffer, len * sizeof(AudioFrame::##type##) / 4); \
@@ -182,6 +196,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af21:
@@ -194,6 +209,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af3:
@@ -206,6 +222,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af31:
@@ -219,6 +236,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af4:
@@ -232,6 +250,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af41:
@@ -246,6 +265,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af5:
@@ -260,6 +280,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af51:
@@ -275,6 +296,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af7:
@@ -291,6 +313,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			case AudioFrame::Type::eT_af71:
@@ -308,6 +331,7 @@ namespace AlternativeAudio {
 				}
 
 				delete in;
+				flags->SetFlags(flags->GetFlags() | AASourceFlags::eAF_Deinterlaced);
 			}
 			break;
 			}

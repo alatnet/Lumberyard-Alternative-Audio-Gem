@@ -2,8 +2,10 @@
 
 #include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore/RTTI/BehaviorContext.h>
+#include <AzCore/RTTI/TypeInfo.h>
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\AAErrorHandler.h>
+#include <AlternativeAudio\AAFlagHandler.h>
 #include <AlternativeAudio\AAAudioFrame.h>
 #include <AlternativeAudio\AASmartRef.h>
 #include <AzCore\std\string\string.h>
@@ -79,8 +81,8 @@ namespace AlternativeAudio {
 	public:
 		//can implement either or both.
 		//best to implement both and toggle GetProcessType based on platform features.
-		virtual void Process(AudioFrame::Type format, float * buffer, long long len) {} //processes a range of frames (has a for loop)
-		virtual void ProcessFrame(AudioFrame::Type format, float * frame) {} //processes a single frame (used in a for loop)
+		virtual void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags) {} //processes a range of frames (has a for loop)
+		virtual void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags) {} //processes a single frame (used in a for loop)
 	public:
 		virtual int GetDSPSection() = 0;
 		virtual AADSPProcessType GetProcessType() = 0;
@@ -108,4 +110,9 @@ namespace AlternativeAudio {
 				->Method("GetError", &AADSPEffect::GetError)*/;
 		}
 	};
+}
+
+namespace AZ {
+	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AADSPSection, "{95E86FD2-44FB-413B-A25D-9CE9CC1B5204}");
+	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AADSPProcessType, "{DC351EF8-609A-4C7A-8AB0-01C37A8077D1}");
 }

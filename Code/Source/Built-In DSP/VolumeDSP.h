@@ -20,8 +20,8 @@ namespace AlternativeAudio{
             void SetVol(float vol);
             float GetVol() { return this->m_vol; }
         public:
-            void Process(AudioFrame::Type format, float * buffer, long long len);
-            void ProcessFrame(AudioFrame::Type format, float * frame);
+            void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags);
+            void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags);
 		public:
 			int GetDSPSection() { return eDS_PerSource_BC | eDS_PerSource_AC | eDS_PerSource_ARS | eDS_Output; }
 			AADSPProcessType GetProcessType() { return eDPT_Buffer; }

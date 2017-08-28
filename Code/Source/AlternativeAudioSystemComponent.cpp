@@ -1234,7 +1234,7 @@ namespace AlternativeAudio {
 				ec->Class<AlternativeAudioSystemComponent>("AlternativeAudio", "Provides an alternative audio system for usage in lumberyard.")
 					->ClassElement(AZ::Edit::ClassElements::EditorData, "")
 					->Attribute(AZ::Edit::Attributes::Category, "Audio")
-					->Attribute(AZ::Edit::Attributes::AppearsInAddComponentMenu, AZ_CRC("System"))
+					->Attribute(AZ::Edit::Attributes::AppearsInAddComponentMenu, AZ_CRC("System", 0xc94d118b))
 					->Attribute(AZ::Edit::Attributes::AutoExpand, true)
 					;
 			}
@@ -1243,26 +1243,47 @@ namespace AlternativeAudio {
 		AZ::BehaviorContext* behaviorContext = azrtti_cast<AZ::BehaviorContext*>(context);
 		if (behaviorContext) {
 			///constants and enums
-			behaviorContext->Class<AlternativeAudioSystemComponent>("AASystem")
-				->Enum<AADSPSection::eDS_PerSource_BC>("eDS_PerSource_BC")
-				->Enum<AADSPSection::eDS_PerSource_AC>("eDS_PerSource_AC")
-				->Enum<AADSPSection::eDS_PerSource_ARS>("eDS_PerSource_ARS")
-				->Enum<AADSPSection::eDS_Output>("eDS_Output")
-				->Enum<AADSPProcessType::eDPT_Buffer>("eDPT_Buffer")
-				->Enum<AADSPProcessType::eDPT_Frame>("eDPT_Frame")
-				->Enum<AASourceFlags::eAF_Loop>("eAF_Loop")
-				->Enum<AASourceFlags::eAF_LoopSection>("eAF_LoopSection")
-				->Enum<AASourceFlags::eAF_PausedOnStart>("eAF_PausedOnStart")
-				->Enum<AAResampleQuality::eAARQ_Best>("eAARQ_Best")
-				->Enum<AAResampleQuality::eAARQ_Medium>("eAARQ_Medium")
-				->Enum<AAResampleQuality::eAARQ_Fastest>("eAARQ_Fastest")
-				->Enum<AAResampleQuality::eAARQ_Zero_Order_Hold>("eAARQ_Zero_Order_Hold")
-				->Enum<AAResampleQuality::eAARQ_Linear>("eAARQ_Linear")
-				->Enum<AAResampleQuality::eAARQ_Misc0>("eAARQ_Misc0")
-				->Enum<AAResampleQuality::eAARQ_Misc1>("eAARQ_Misc1")
-				->Enum<AAResampleQuality::eAARQ_Misc2>("eAARQ_Misc2")
-				->Enum<AAResampleQuality::eAARQ_Misc3>("eAARQ_Misc3")
-				->Enum<AAResampleQuality::eAARQ_Misc4>("eAARQ_Misc4");
+			behaviorContext->Class<AADSPSection>("AADSPSection")
+				->Enum<AADSPSection::eDS_PerSource_BC>("PerSource_BC")
+				->Enum<AADSPSection::eDS_PerSource_AC>("PerSource_AC")
+				->Enum<AADSPSection::eDS_PerSource_ARS>("PerSource_ARS")
+				->Enum<AADSPSection::eDS_Output>("Output");
+
+			behaviorContext->Class<AADSPProcessType>("AADSPProcessType")
+				->Enum<AADSPProcessType::eDPT_Buffer>("Buffer")
+				->Enum<AADSPProcessType::eDPT_Frame>("Frame");
+			
+			#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("eAF_Reserved##id") 
+			behaviorContext->Class<AASourceFlags>("AASourceFlags")
+				->Enum<AASourceFlags::eAF_Loop>("Loop")
+				->Enum<AASourceFlags::eAF_LoopSection>("LoopSection")
+				->Enum<AASourceFlags::eAF_PausedOnStart>("PausedOnStart")
+				->Enum<AASourceFlags::eAF_Deinterlaced>("eAF_Deinterlaced")
+				RESERVED_BIT(0)
+				RESERVED_BIT(1)
+				RESERVED_BIT(2)
+				RESERVED_BIT(3)
+				RESERVED_BIT(4)
+				RESERVED_BIT(5)
+				RESERVED_BIT(6)
+				RESERVED_BIT(7)
+				RESERVED_BIT(8)
+				RESERVED_BIT(9)
+				RESERVED_BIT(10)
+				RESERVED_BIT(11);
+			#undef RESERVED_BIT
+
+			behaviorContext->Class<AAResampleQuality>("AAResampleQuality")
+				->Enum<AAResampleQuality::eAARQ_Best>("Best")
+				->Enum<AAResampleQuality::eAARQ_Medium>("Medium")
+				->Enum<AAResampleQuality::eAARQ_Fastest>("Fastest")
+				->Enum<AAResampleQuality::eAARQ_Zero_Order_Hold>("Zero_Order_Hold")
+				->Enum<AAResampleQuality::eAARQ_Linear>("Linear")
+				->Enum<AAResampleQuality::eAARQ_Misc0>("Misc0")
+				->Enum<AAResampleQuality::eAARQ_Misc1>("Misc1")
+				->Enum<AAResampleQuality::eAARQ_Misc2>("Misc2")
+				->Enum<AAResampleQuality::eAARQ_Misc3>("Misc3")
+				->Enum<AAResampleQuality::eAARQ_Misc4>("Misc4");
 
 			///audio frame types
 			behaviorContext->Class<AudioFrame::Type>("AAAudioFrame")
@@ -1345,11 +1366,11 @@ namespace AlternativeAudio {
 	}
 
 	void AlternativeAudioSystemComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided) {
-		provided.push_back(AZ_CRC("AlternativeAudioService"));
+		provided.push_back(AZ_CRC("AlternativeAudioService", 0x2eb4e627));
 	}
 
 	void AlternativeAudioSystemComponent::GetIncompatibleServices(AZ::ComponentDescriptor::DependencyArrayType& incompatible) {
-		incompatible.push_back(AZ_CRC("AlternativeAudioService"));
+		incompatible.push_back(AZ_CRC("AlternativeAudioService", 0x2eb4e627));
 	}
 
 	void AlternativeAudioSystemComponent::GetRequiredServices(AZ::ComponentDescriptor::DependencyArrayType& required) {
@@ -1380,19 +1401,19 @@ namespace AlternativeAudio {
 
 		this->RegisterDSPEffect(
 			"AAVolumeControl",
-			AZ_CRC("AAVolumeControl"),
+			AZ_CRC("AAVolumeControl", 0x722dd2a9),
 			[](void* userdata)-> AADSPEffect* { return new DSP::VolumeDSPEffect(userdata); }
 		);
 
 		this->RegisterDSPEffect(
 			"AAInterleave",
-			AZ_CRC("AAInterleave"),
+			AZ_CRC("AAInterleave", 0x0ac7fd53),
 			[&](void* userdata)-> AADSPEffect* { return this->interlaceDSP; } //why create more than one interlace dsp effect?
 		);
 
 		this->RegisterDSPEffect(
 			"AADeinterleave",
-			AZ_CRC("AADeinterleave"),
+			AZ_CRC("AADeinterleave", 0x4a642bed),
 			[&](void* userdata)-> AADSPEffect* { return this->deinterlaceDSP; } //why create more than one deinterlace dsp effect?
 		);
 	}

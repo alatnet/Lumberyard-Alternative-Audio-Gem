@@ -4,6 +4,7 @@
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\AAAudioFrame.h>
 #include <AlternativeAudio\DSP\AADSPEffect.h>
+#include <AlternativeAudio\AAFlagHandler.h>
 
 namespace AlternativeAudio {
 	//basic effect handler, useful for audio sources.
@@ -55,11 +56,11 @@ namespace AlternativeAudio {
 			return false; //no effect in that slot
 		}
 	protected:
-		void ProcessEffects(AudioFrame::Type format, float* buffer, long long len) {
+		void ProcessEffects(AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) {
 			for (std::pair<unsigned long long, AADSPEffect *> effect : this->effects) {
 				switch (effect.second->GetProcessType()) {
 				case eDPT_Buffer:
-					effect.second->Process(format, buffer, len);
+					effect.second->Process(format, buffer, len, flags);
 					break;
 				case eDPT_Frame:
 
@@ -67,7 +68,7 @@ namespace AlternativeAudio {
 						case AlternativeAudio::AudioFrame::Type::eT_##Format##: \
 						{ \
 							AlternativeAudio::AudioFrame::##Format##* buff = (AlternativeAudio::AudioFrame::##Format##*)buffer; \
-							for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i]); \
+							for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i], flags); \
 						}
 
 					switch (format) {
@@ -188,12 +189,12 @@ namespace AlternativeAudio {
 			return false; //there is no dsp effect in slot specified
 		}
 	protected:
-		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len) {
+		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) {
 			int sectionInt = this->GetSection(section);
 			for (std::pair<unsigned long long, AADSPEffect *> effect : this->m_dspEffects[sectionInt]) {
 				switch (effect.second->GetProcessType()) {
 				case eDPT_Buffer:
-					effect.second->Process(format, buffer, len);
+					effect.second->Process(format, buffer, len, flags);
 					break;
 				case eDPT_Frame:
 
@@ -201,7 +202,7 @@ namespace AlternativeAudio {
 					case AlternativeAudio::AudioFrame::Type::eT_##Format##: \
 					{ \
 						AlternativeAudio::AudioFrame::##Format##* buff = (AlternativeAudio::AudioFrame::##Format##*)buffer; \
-						for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i]); \
+						for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i], flags); \
 					}
 
 					switch (format) {

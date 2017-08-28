@@ -2,6 +2,7 @@
 
 #include <AzCore/Serialization/SerializeContext.h>
 #include <AzCore/RTTI/BehaviorContext.h>
+#include <AzCore/RTTI/TypeInfo.h>
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\AAErrorHandler.h>
 #include <AlternativeAudio\AAAudioFrame.h>
@@ -54,7 +55,13 @@ namespace AlternativeAudio {
 				->Method("getDefaultSampleRate", &OAudioDeviceInfo::getDefaultSampleRate)
 				->Method("getFormat", &OAudioDeviceInfo::getFormat)
 				->Method("getSampleRate", &OAudioDeviceInfo::getSampleRate)
-				->Method("getResampleQuality", &OAudioDeviceInfo::getResampleQuality);
+				->Method("getResampleQuality", &OAudioDeviceInfo::getResampleQuality)
+				->Constant("name", &OAudioDeviceInfo::getName)
+				->Constant("maxChannels", &OAudioDeviceInfo::getMaxChannels)
+				->Constant("defaultSampleRate", &OAudioDeviceInfo::getDefaultSampleRate)
+				->Constant("currentFormat", &OAudioDeviceInfo::getFormat)
+				->Constant("currentSampleRate", &OAudioDeviceInfo::getSampleRate)
+				->Constant("currentResampleQuality", &OAudioDeviceInfo::getResampleQuality);
 		}
 	};
 
@@ -80,6 +87,8 @@ namespace AlternativeAudio {
 		virtual bool IsPlaying(long long id) = 0;
 		virtual AudioSourceTime GetTime(long long id) = 0;
 		virtual void SetTime(long long id, double time) = 0;
+	protected:
+		AAFlagHandler m_flags;
 	public:
 		static void Reflect(AZ::SerializeContext* serialize) {
 			serialize->Class<OAudioDevice, AADSPDeviceEffectHandler, AASmartRef, AAErrorHandler>()
@@ -139,4 +148,8 @@ namespace AlternativeAudio {
 	private:
 		AZStd::vector<OAudioDeviceInfo> m_NullDeviceInfo;
 	};
+}
+
+namespace AZ {
+	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AAResampleQuality, "{FA9A856C-AE6B-4758-8C5E-469FB82CF29A}");
 }

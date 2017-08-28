@@ -16,11 +16,11 @@ namespace AlternativeAudio {
 		params:
 		- int - flags to set (usually ored "|" together).
 		*/
-		void SetFlags(int flags) { this->m_flags = flags; }
+		void SetFlags(long long flags) { this->m_flags = flags; }
 		//returns the flags set
-		int GetFlags() { return this->m_flags; }
+		long long GetFlags() { return this->m_flags; }
 	protected:
-		int m_flags;
+		long long m_flags;
 	public:
 		static void Reflect(AZ::SerializeContext* serialize) {
 			serialize->Class<AAFlagHandler>()
