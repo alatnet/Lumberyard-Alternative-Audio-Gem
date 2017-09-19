@@ -87,6 +87,8 @@ namespace AlternativeAudio {
 		virtual bool IsPlaying(long long id) = 0;
 		virtual AudioSourceTime GetTime(long long id) = 0;
 		virtual void SetTime(long long id, double time) = 0;
+	public:
+		virtual void SetMaster(bool onoff) = 0; //mainly for when assigning a device as a master device
 	protected:
 		AAFlagHandler m_flags;
 	public:

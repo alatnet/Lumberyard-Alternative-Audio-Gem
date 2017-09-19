@@ -1253,24 +1253,17 @@ namespace AlternativeAudio {
 				->Enum<AADSPProcessType::eDPT_Buffer>("Buffer")
 				->Enum<AADSPProcessType::eDPT_Frame>("Frame");
 			
-			#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("eAF_Reserved##id") 
+			#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("Reserved##id") 
 			behaviorContext->Class<AASourceFlags>("AASourceFlags")
 				->Enum<AASourceFlags::eAF_Loop>("Loop")
 				->Enum<AASourceFlags::eAF_LoopSection>("LoopSection")
 				->Enum<AASourceFlags::eAF_PausedOnStart>("PausedOnStart")
-				->Enum<AASourceFlags::eAF_Deinterlaced>("eAF_Deinterlaced")
+				->Enum<AASourceFlags::eAF_Deinterlaced>("Deinterlaced")
 				RESERVED_BIT(0)
 				RESERVED_BIT(1)
 				RESERVED_BIT(2)
 				RESERVED_BIT(3)
-				RESERVED_BIT(4)
-				RESERVED_BIT(5)
-				RESERVED_BIT(6)
-				RESERVED_BIT(7)
-				RESERVED_BIT(8)
-				RESERVED_BIT(9)
-				RESERVED_BIT(10)
-				RESERVED_BIT(11);
+				RESERVED_BIT(4);
 			#undef RESERVED_BIT
 
 			behaviorContext->Class<AAResampleQuality>("AAResampleQuality")
@@ -1515,8 +1508,12 @@ namespace AlternativeAudio {
 
 	void AlternativeAudioSystemComponent::SetMasterDevice(OAudioDevice * device) {
 		if (device) device->AddRef();
-		if (this->m_MasterDevice) this->m_MasterDevice->Release();
+		if (this->m_MasterDevice) {
+			this->m_MasterDevice->SetMaster(false);
+			this->m_MasterDevice->Release();
+		}
 		this->m_MasterDevice = device;
+		this->m_MasterDevice->SetMaster(true);
 	}
 
 	#define IF_DEVICE if (this->m_MasterDevice) this->m_MasterDevice
