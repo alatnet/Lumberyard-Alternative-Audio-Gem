@@ -1191,6 +1191,8 @@ namespace AlternativeAudio {
 		//delete this->deinterlaceDSP;
 		this->interlaceDSP->Release();
 		this->deinterlaceDSP->Release();
+
+		this->SetMasterDevice(nullptr);
 	}
 
 	/*
@@ -1507,13 +1509,17 @@ namespace AlternativeAudio {
 	//---------
 
 	void AlternativeAudioSystemComponent::SetMasterDevice(OAudioDevice * device) {
-		if (device) device->AddRef();
 		if (this->m_MasterDevice) {
 			this->m_MasterDevice->SetMaster(false);
 			this->m_MasterDevice->Release();
 		}
+
 		this->m_MasterDevice = device;
-		this->m_MasterDevice->SetMaster(true);
+
+		if (this->m_MasterDevice) {
+			this->m_MasterDevice->AddRef();
+			this->m_MasterDevice->SetMaster(true);
+		}
 	}
 
 	#define IF_DEVICE if (this->m_MasterDevice) this->m_MasterDevice
@@ -1552,6 +1558,11 @@ namespace AlternativeAudio {
 	void AlternativeAudioSystemComponent::SetTime(long long id, double time) {
 		IF_DEVICE->SetTime(id, time);
 	}
+
+	void AlternativeAudioSystemComponent::Queue(bool startstop) {
+		IF_DEVICE->Queue(startstop);
+	}
+
 	#undef IF_DEVICE
 	#undef IF_DEVICE_RET
 	////////////////////////////////////////////////////////////////////////

@@ -95,6 +95,8 @@ namespace AlternativeAudio {
 		virtual bool IsPlaying(long long id) = 0;
 		virtual AudioSourceTime GetTime(long long id) = 0;
 		virtual void SetTime(long long id, double time) = 0;
+	public:
+		virtual void Queue(bool startstop) = 0; //used to queue up multiple commands for simultanious execution. (applyies to play,pause,resume, and stop).
 	};
 	using AlternativeAudioDeviceBus = AZ::EBus<AlternativeAudioDeviceRequests>;
 

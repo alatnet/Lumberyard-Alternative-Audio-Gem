@@ -88,6 +88,8 @@ namespace AlternativeAudio {
 		virtual AudioSourceTime GetTime(long long id) = 0;
 		virtual void SetTime(long long id, double time) = 0;
 	public:
+		virtual void Queue(bool startstop) = 0; //used to queue up multiple commands for simultanious execution.
+	public:
 		virtual void SetMaster(bool onoff) = 0; //mainly for when assigning a device as a master device
 	protected:
 		AAFlagHandler m_flags;
@@ -109,7 +111,8 @@ namespace AlternativeAudio {
 				->Method("StopSource", &OAudioDevice::StopSource)
 				->Method("IsPlaying", &OAudioDevice::IsPlaying)
 				->Method("GetTime", &OAudioDevice::GetTime)
-				->Method("SetTime", &OAudioDevice::SetTime);
+				->Method("SetTime", &OAudioDevice::SetTime)
+				->Method("Queue", &OAudioDevice::Queue);
 		}
 	};
 

@@ -96,6 +96,7 @@ namespace AlternativeAudio {
 		bool IsPlaying(long long id);
 		AlternativeAudio::AudioSourceTime GetTime(long long id);
 		void SetTime(long long id, double time);
+		void Queue(bool startstop);
 	private:
 		AZStd::unordered_map<AZ::Crc32, OAudioDeviceProvider*> *m_deviceProviders;
 		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>> *m_deviceLibNames;
