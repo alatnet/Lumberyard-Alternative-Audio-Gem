@@ -6,6 +6,11 @@
 #include <AlternativeAudio\DSP\AADSPEffect.h>
 #include <AlternativeAudio\Device\OAudioDevice.h>
 
+#define ALTERNATIVE_AUDIO_VER_HIGH 3
+#define ALTERNATIVE_AUDIO_VER_LOW 1
+#define ALTERNATIVE_AUDIO_VER_REV 0
+#define ALTERNATIVE_AUDIO_VER_STR "3.1.0"
+
 namespace AlternativeAudio {
 	//function definitions
 	typedef AZStd::function<IAudioSource* (const char *, void*)> NewAudioSourceFunc;
@@ -88,13 +93,19 @@ namespace AlternativeAudio {
 		virtual void SetStream(double samplerate, AudioFrame::Type audioFormat, void * userdata) = 0;
 		virtual void SetResampleQuality(AAResampleQuality quality) = 0;
 		virtual OAudioDeviceInfo GetDeviceInfo() = 0;
-		virtual long long PlaySource(IAudioSource * source) = 0;
-		virtual void PauseSource(long long id) = 0;
-		virtual void ResumeSource(long long id) = 0;
-		virtual void StopSource(long long id) = 0;
-		virtual bool IsPlaying(long long id) = 0;
-		virtual AudioSourceTime GetTime(long long id) = 0;
-		virtual void SetTime(long long id, double time) = 0;
+		virtual unsigned long long PlaySource(IAudioSource * source) = 0;
+		virtual void PlaySFXSource(IAudioSource * source) = 0; //used to play sfx audio sources that are one hit wonders
+		virtual void PauseSource(unsigned long long id) = 0;
+		virtual void ResumeSource(unsigned long long id) = 0;
+		virtual void StopSource(unsigned long long id) = 0;
+		virtual bool IsPlaying(unsigned long long id) = 0;
+		virtual AudioSourceTime GetTime(unsigned long long id) = 0;
+		virtual void SetTime(unsigned long long id, double time) = 0;
+	public:
+		//used to control ALL sound source playback.
+		virtual void PauseAll() = 0;
+		virtual void ResumeAll() = 0;
+		virtual void StopAll() = 0;
 	public:
 		virtual void Queue(bool startstop) = 0; //used to queue up multiple commands for simultanious execution. (applyies to play,pause,resume, and stop).
 	};

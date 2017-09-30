@@ -89,13 +89,17 @@ namespace AlternativeAudio {
 		void SetStream(double samplerate, AudioFrame::Type audioFormat, void * userdata);
 		void SetResampleQuality(AAResampleQuality quality);
 		OAudioDeviceInfo GetDeviceInfo();
-		long long PlaySource(AlternativeAudio::IAudioSource * source);
-		void PauseSource(long long id);
-		void ResumeSource(long long id);
-		void StopSource(long long id);
-		bool IsPlaying(long long id);
-		AlternativeAudio::AudioSourceTime GetTime(long long id);
-		void SetTime(long long id, double time);
+		unsigned long long PlaySource(AlternativeAudio::IAudioSource * source);
+		void PlaySFXSource(AlternativeAudio::IAudioSource * source);
+		void PauseSource(unsigned long long id);
+		void ResumeSource(unsigned long long id);
+		void StopSource(unsigned long long id);
+		bool IsPlaying(unsigned long long id);
+		AlternativeAudio::AudioSourceTime GetTime(unsigned long long id);
+		void SetTime(unsigned long long id, double time);
+		virtual void PauseAll();
+		virtual void ResumeAll();
+		virtual void StopAll();
 		void Queue(bool startstop);
 	private:
 		AZStd::unordered_map<AZ::Crc32, OAudioDeviceProvider*> *m_deviceProviders;

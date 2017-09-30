@@ -1534,31 +1534,42 @@ namespace AlternativeAudio {
 		IF_DEVICE_RET->GetDeviceInfo();
 		return OAudioDeviceInfo();
 	}
-	long long AlternativeAudioSystemComponent::PlaySource(IAudioSource * source) {
+	unsigned long long AlternativeAudioSystemComponent::PlaySource(IAudioSource * source) {
 		IF_DEVICE_RET->PlaySource(source);
 		return -1;
 	}
-	void AlternativeAudioSystemComponent::PauseSource(long long id) {
+	void AlternativeAudioSystemComponent::PlaySFXSource(IAudioSource * source) {
+		IF_DEVICE->PlaySFXSource(source);
+	}
+	void AlternativeAudioSystemComponent::PauseSource(unsigned long long id) {
 		IF_DEVICE->PauseSource(id);
 	}
-	void AlternativeAudioSystemComponent::ResumeSource(long long id) {
+	void AlternativeAudioSystemComponent::ResumeSource(unsigned long long id) {
 		IF_DEVICE->ResumeSource(id);
 	}
-	void AlternativeAudioSystemComponent::StopSource(long long id) {
+	void AlternativeAudioSystemComponent::StopSource(unsigned long long id) {
 		IF_DEVICE->StopSource(id);
 	}
-	bool AlternativeAudioSystemComponent::IsPlaying(long long id) {
+	bool AlternativeAudioSystemComponent::IsPlaying(unsigned long long id) {
 		IF_DEVICE_RET->IsPlaying(id);
 		return false;
 	}
-	AudioSourceTime AlternativeAudioSystemComponent::GetTime(long long id) {
+	AudioSourceTime AlternativeAudioSystemComponent::GetTime(unsigned long long id) {
 		IF_DEVICE_RET->GetTime(id);
 		return AudioSourceTime();
 	}
-	void AlternativeAudioSystemComponent::SetTime(long long id, double time) {
+	void AlternativeAudioSystemComponent::SetTime(unsigned long long id, double time) {
 		IF_DEVICE->SetTime(id, time);
 	}
-
+	void AlternativeAudioSystemComponent::PauseAll() {
+		IF_DEVICE->PauseAll();
+	}
+	void AlternativeAudioSystemComponent::ResumeAll() {
+		IF_DEVICE->ResumeAll();
+	}
+	void AlternativeAudioSystemComponent::StopAll() {
+		IF_DEVICE->StopAll();
+	}
 	void AlternativeAudioSystemComponent::Queue(bool startstop) {
 		IF_DEVICE->Queue(startstop);
 	}

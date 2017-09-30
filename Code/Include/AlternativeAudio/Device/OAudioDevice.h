@@ -80,13 +80,18 @@ namespace AlternativeAudio {
 		virtual void SetResampleQuality(AAResampleQuality quality) = 0;
 		virtual OAudioDeviceInfo GetDeviceInfo() = 0;
 	public:
-		virtual long long PlaySource(IAudioSource * source) = 0;
-		virtual void PauseSource(long long id) = 0;
-		virtual void ResumeSource(long long id) = 0;
-		virtual void StopSource(long long id) = 0;
-		virtual bool IsPlaying(long long id) = 0;
-		virtual AudioSourceTime GetTime(long long id) = 0;
-		virtual void SetTime(long long id, double time) = 0;
+		virtual unsigned long long PlaySource(IAudioSource * source) = 0;
+		virtual void PlaySFXSource(IAudioSource * source) {}; //used to play sfx audio sources that are one hit wonders
+		virtual void PauseSource(unsigned long long id) = 0;
+		virtual void ResumeSource(unsigned long long id) = 0;
+		virtual void StopSource(unsigned long long id) = 0;
+		virtual bool IsPlaying(unsigned long long id) = 0;
+		virtual AudioSourceTime GetTime(unsigned long long id) = 0;
+		virtual void SetTime(unsigned long long id, double time) = 0;
+		//used to control ALL sound source playback.
+		virtual void PauseAll() {};
+		virtual void ResumeAll() {};
+		virtual void StopAll() {};
 	public:
 		virtual void Queue(bool startstop) = 0; //used to queue up multiple commands for simultanious execution.
 	public:
