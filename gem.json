@@ -1,20 +1,20 @@
 {
-  "Dependencies": [
-    {
-      "Uuid": "ff06785f7145416b9d46fde39098cb0c",
-      "VersionConstraints": [
-        "~>0.1"
-      ],
-      "_comment": "LmbrCentral"
-    }
-  ],
-  "GemFormatVersion": 3,
-  "Uuid": "b4745a69bade49a3aacc01e4475bdee7",
-  "Name": "AlternativeAudio",
-  "DisplayName": "AlternativeAudio",
-  "Version": "0.1.0",
-  "LinkType": "Dynamic",
-  "Summary": "A system to implement alternative audio systems within lumberyard",
-  "Tags": [ "Audio", "Alternative Audio" ],
-  "IconPath": "preview.png"
+	"Dependencies": [
+		{
+			"Uuid": "ff06785f7145416b9d46fde39098cb0c",
+			"VersionConstraints": [
+				"~>0.1"
+			],
+			"_comment": "LmbrCentral"
+		}
+	],
+	"GemFormatVersion": 3,
+	"Uuid": "b4745a69bade49a3aacc01e4475bdee7",
+	"Name": "AlternativeAudio",
+	"DisplayName": "AlternativeAudio",
+	"Version": "3.1.0",
+	"LinkType": "Dynamic",
+	"Summary": "A system to implement alternative audio systems within lumberyard",
+	"Tags": [ "Audio", "Alternative Audio" ],
+	"IconPath": "preview.png"
 }
