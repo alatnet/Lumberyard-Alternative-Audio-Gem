@@ -136,7 +136,7 @@ int main(){
     bool isPlaying = true;
 
     while (isPlaying){
-    //keep querying to make sure that he audio source is still playing.
+    //keep querying to make sure that the audio source is still playing.
     EBUS_EVENT_RESULT(
         isPlaying,
         AlternativeAudio::AlternativeAudioDeviceBus,
