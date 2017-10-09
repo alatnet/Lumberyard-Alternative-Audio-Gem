@@ -199,7 +199,7 @@ function Example:OnActivate()
     self.source = AlternativeAudioSourceBus.Broadcast.NewAudioSource(self.audioLib, "<AudioPath>", nil)
 
     --create an audio source volume dsp effect
-    self.sourceVolume = AlternativeAudioDSPBus.NewDSPEffect(Crc32("AAVolumeControl"), nil)
+    self.sourceVolume = AlternativeAudioDSPBus.Broadcast.NewDSPEffect(Crc32("AAVolumeControl"), nil)
     self.sourceVolume:AddRef()
    
     --set the source volume dsp effect to a free slot.
