@@ -136,13 +136,14 @@ int main(){
     bool isPlaying = true;
 
     while (isPlaying){
-    //keep querying to make sure that the audio source is still playing.
-    EBUS_EVENT_RESULT(
-        isPlaying,
-        AlternativeAudio::AlternativeAudioDeviceBus,
-        IsPlaying,
-        sourceID
-    );
+        //keep querying to make sure that the audio source is still playing.
+        EBUS_EVENT_RESULT(
+            isPlaying,
+            AlternativeAudio::AlternativeAudioDeviceBus,
+            IsPlaying,
+            sourceID
+        );
+    }
 
     delete source; //delete the audio source
     sourceVolume->Release(); //free up the source volume dsp effect.
