@@ -12,7 +12,19 @@
 #include <AzCore\std\sort.h>
 
 namespace AlternativeAudio {
-	//where the dsp can be used
+
+	//How the dsp sections work.
+	/*
+	for each source
+	-Get raw source frames
+	-Apply PerSource_BC DSP (Before Convert)
+	-Convert source frames to playback audio format. (i.e. 2ch to 4ch)
+	-Apply PerSource_AC DSP (After Convert)
+	-Resample if needed
+	-Apply PerSource_ARS DSP (After ReSample)
+	-Mix frames with output buffer.
+	Apply Output DSP
+	*/
 	enum AADSPSection {
 		eDS_PerSource_BC = 1 << 0, //before converting audio frame
 		eDS_PerSource_AC = 1 << 1, //after converting audio frame
@@ -22,53 +34,30 @@ namespace AlternativeAudio {
 		//eDS_PerSource = 1 << 4, //in IAudioSource GetFrames/GetFrame
 	};
 
-	enum AADSPProcessType {
-		eDPT_Buffer, //entire buffer //allows for using SSE or other types of buffer processing
-		eDPT_Frame //single frame //allows for stacking dsp processing calls and multi-threading
-	};
-
+	//How process types work
 	/*
-	How the dsp sections work.
-	-for each source
-	--Get raw source frames
-	--Apply PerSource_BC DSP
-	---for each frame
-	----for each DSP
-	-----process DSP frame
-	--Convert source frames to playback audio format.
-	--Apply PerSource_AC DSP
-	---for each frame
-	----for each DSP
-	-----process DSP frame
-	--Resample if needed
-	--Apply PerSource_ARS
-	---for each frame
-	----for each DSP
-	-----process DSP frame
-	--Mix frames with output buffer.
-	-Apply Output DSP
-	---for each frame
-	----for each DSP
-	-----process DSP frame
-	*/
-
-	/*
+	==eDPT_Buffer
 	for (AADSPEffect effect : effects){
-	effect.Process(srcFormat, srcBuffer, srcLen);
-	--for (long long i=0; i<srcLen; i++){
-	--  dsp effect code
-	--}
+	  effect.Process(srcFormat, srcBuffer, srcLen);
+	  --for (long long i=0; i<srcLen; i++){
+	  --  dsp effect code
+	  --}
 	}
 
 	OR
 
+	==eDPT_Frame
 	for (long long i = 0; i < len; i++){ //can be parallised
-	for (AADSPEffect effect : effects){
-	effect.ProcessFrame(srcFormat, frame[i]);
-	-- dsp effect code
-	}
+	  for (AADSPEffect effect : effects){
+	    effect.ProcessFrame(srcFormat, frame[i]);
+	    -- dsp effect code
+	  }
 	}
 	*/
+	enum AADSPProcessType {
+		eDPT_Buffer, //entire buffer //allows for using SSE or other types of buffer processing
+		eDPT_Frame //single frame //allows for stacking dsp processing calls and multi-threading
+	};
 
 	//effect itself
 	class AADSPEffect : public AAErrorHandler, public AASmartRef {
@@ -101,6 +90,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AADSPEffect>("AADSPEffect")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("GetName", &AADSPEffect::GetName)
 				->Method("GetDSPSection", &AADSPEffect::GetDSPSection)
 				->Method("GetProcessType", &AADSPEffect::GetProcessType)

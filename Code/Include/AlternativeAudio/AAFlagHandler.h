@@ -30,6 +30,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AAFlagHandler>("AAFlagHandler")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("SetFlags", &AAFlagHandler::SetFlags)
 				->Method("GetFlags", &AAFlagHandler::GetFlags);
 		}

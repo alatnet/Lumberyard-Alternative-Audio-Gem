@@ -101,6 +101,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AADSPEffectHandler>("AADSPEffectHandler")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("AddEffect", &AADSPEffectHandler::AddEffect)
 				->Method("AddEffectFreeSlot", &AADSPEffectHandler::AddEffectFreeSlot)
 				->Method("GetEffect", &AADSPEffectHandler::GetEffect)
@@ -248,6 +249,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AADSPDeviceEffectHandler>("AADSPDeviceEffectHandler")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("AddEffect", &AADSPDeviceEffectHandler::AddEffect)
 				->Method("AddEffectFreeSlot", &AADSPDeviceEffectHandler::AddEffectFreeSlot)
 				->Method("GetEffect", &AADSPDeviceEffectHandler::GetEffect)

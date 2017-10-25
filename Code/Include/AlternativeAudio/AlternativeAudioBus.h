@@ -6,10 +6,10 @@
 #include <AlternativeAudio\DSP\AADSPEffect.h>
 #include <AlternativeAudio\Device\OAudioDevice.h>
 
-#define ALTERNATIVE_AUDIO_VER_HIGH 3
-#define ALTERNATIVE_AUDIO_VER_LOW 1
+#define ALTERNATIVE_AUDIO_VER_HIGH 4
+#define ALTERNATIVE_AUDIO_VER_LOW 0
 #define ALTERNATIVE_AUDIO_VER_REV 0
-#define ALTERNATIVE_AUDIO_VER_STR "3.1.0"
+#define ALTERNATIVE_AUDIO_VER_STR "4.0.0"
 
 namespace AlternativeAudio {
 	//function definitions

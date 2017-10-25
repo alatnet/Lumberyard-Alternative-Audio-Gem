@@ -27,16 +27,26 @@
       "Include/AlternativeAudio/DSP/AADSPEffect.h",
       "Include/AlternativeAudio/DSP/AADSPEffectHandler.h"
     ],
+    "Include/Components": [
+      "Include/AlternativeAudio/Components/AudioSourceComponentBus.h",
+      "Include/AlternativeAudio/Components/DSPEffectComponentBus.h"
+    ],
     "Source": [
-      "Source/AlternativeAudioModule.cpp",
-      "Source/AlternativeAudioSystemComponent.cpp",
-      "Source/AlternativeAudioSystemComponent.h"
+      "Source/AlternativeAudioModule.cpp"
     ],
     "Source/DSP Effects": [
       "Source/Built-In DSP/VolumeDSP.cpp",
       "Source/Built-In DSP/VolumeDSP.h",
       "Source/Built-In DSP/InterlaceDSP.cpp",
       "Source/Built-In DSP/InterlaceDSP.h"
+    ],
+    "Source/Components": [
+      "Source/AlternativeAudioSystemComponent.cpp",
+      "Source/AlternativeAudioSystemComponent.h",
+      "Source/Components/AudioSourceComponent.cpp",
+      "Source/Components/AudioSourceComponent.h",
+      "Source/Components/DSPEffectComponent.cpp",
+      "Source/Components/DSPEffectComponent.h"
     ]
   }
 }

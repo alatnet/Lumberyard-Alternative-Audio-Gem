@@ -8,6 +8,7 @@
 #include <AlternativeAudio\AAAudioFrame.h>
 #include <AlternativeAudio\DSP\AADSPEffect.h>
 #include <AlternativeAudio\DSP\AADSPEffectHandler.h>
+#include <AlternativeAudio\AASmartRef.h>
 
 namespace AlternativeAudio {
 	//class to deal with reading audio sources
@@ -16,9 +17,10 @@ namespace AlternativeAudio {
 		: public AAErrorHandler
 		, public AAFlagHandler
 		, public AADSPEffectHandler
+		, public AASmartRef
 	{
 	public:
-		AZ_RTTI(IAudioSource, "{FA8714F6-E26F-4420-9230-F46F84A99320}", AAErrorHandler, AAFlagHandler, AADSPEffectHandler);
+		AZ_RTTI(IAudioSource, "{FA8714F6-E26F-4420-9230-F46F84A99320}", AAErrorHandler, AAFlagHandler, AADSPEffectHandler, AASmartRef);
 	//public:
 		//IAudioSource(const char * path, void* userdata) {}
 	//public: //Developers, call this to initialize variables or initialize the variables yourself.
@@ -65,6 +67,7 @@ namespace AlternativeAudio {
 			static void Behavior(AZ::BehaviorContext* behaviorContext) {
 				///audio source
 				behaviorContext->Class<IAudioSource>("IAudioSource")
+					->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 					->Method("GetSampleRate", &IAudioSource::GetSampleRate)
 					->Method("GetFrameType", &IAudioSource::GetFrameType)
 					->Method("GetLength", &IAudioSource::GetLength)

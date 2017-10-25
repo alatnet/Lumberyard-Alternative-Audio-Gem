@@ -50,6 +50,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<OAudioDeviceInfo>("OAudioDeviceInfo")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("getName", &OAudioDeviceInfo::getName)
 				->Method("getMaxChannels", &OAudioDeviceInfo::getMaxChannels)
 				->Method("getDefaultSampleRate", &OAudioDeviceInfo::getDefaultSampleRate)
@@ -107,6 +108,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<OAudioDevice>("OAudioDevice")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("SetStream", &OAudioDevice::SetStream)
 				->Method("SetResampleQuality", &OAudioDevice::SetResampleQuality)
 				->Method("GetDeviceInfo", &OAudioDevice::GetDeviceInfo)
@@ -137,6 +139,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<OAudioDeviceProvider>("OAudioDeviceProvider")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("NewDevice", &OAudioDeviceProvider::NewDevice)
 				->Method("GetDevices", &OAudioDeviceProvider::GetDevices)
 				->Method("GetDefaultDevice", &OAudioDeviceProvider::GetDefaultDevice);

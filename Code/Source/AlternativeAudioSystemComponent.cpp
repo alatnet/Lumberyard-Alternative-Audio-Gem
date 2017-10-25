@@ -1246,17 +1246,20 @@ namespace AlternativeAudio {
 		if (behaviorContext) {
 			///constants and enums
 			behaviorContext->Class<AADSPSection>("AADSPSection")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Enum<AADSPSection::eDS_PerSource_BC>("PerSource_BC")
 				->Enum<AADSPSection::eDS_PerSource_AC>("PerSource_AC")
 				->Enum<AADSPSection::eDS_PerSource_ARS>("PerSource_ARS")
 				->Enum<AADSPSection::eDS_Output>("Output");
 
 			behaviorContext->Class<AADSPProcessType>("AADSPProcessType")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Enum<AADSPProcessType::eDPT_Buffer>("Buffer")
 				->Enum<AADSPProcessType::eDPT_Frame>("Frame");
 			
-			#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("Reserved##id") 
+			#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("Reserved##id")
 			behaviorContext->Class<AASourceFlags>("AASourceFlags")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Enum<AASourceFlags::eAF_Loop>("Loop")
 				->Enum<AASourceFlags::eAF_LoopSection>("LoopSection")
 				->Enum<AASourceFlags::eAF_PausedOnStart>("PausedOnStart")
@@ -1269,6 +1272,7 @@ namespace AlternativeAudio {
 			#undef RESERVED_BIT
 
 			behaviorContext->Class<AAResampleQuality>("AAResampleQuality")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Enum<AAResampleQuality::eAARQ_Best>("Best")
 				->Enum<AAResampleQuality::eAARQ_Medium>("Medium")
 				->Enum<AAResampleQuality::eAARQ_Fastest>("Fastest")
@@ -1282,6 +1286,7 @@ namespace AlternativeAudio {
 
 			///audio frame types
 			behaviorContext->Class<AudioFrame::Type>("AAAudioFrame")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Enum<AudioFrame::Type::eT_af1>("af1")
 				->Enum<AudioFrame::Type::eT_af2>("af2")
 				->Enum<AudioFrame::Type::eT_af21>("af21")
@@ -1318,12 +1323,14 @@ namespace AlternativeAudio {
 			///Buses
 			//Alternative Audio EBus
 			behaviorContext->EBus<AlternativeAudioSourceBus>("AlternativeAudioSourceBus")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				//basic audio library system
 				->Event("NewAudioSource", &AlternativeAudioSourceBus::Events::NewAudioSource)
 				->Event("GetAudioLibraryNames", &AlternativeAudioSourceBus::Events::GetAudioLibraryNames);
 
 			//DSP Ebus
 			behaviorContext->EBus<AlternativeAudioDSPBus>("AlternativeAudioDSPBus")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				//basic dsp library system
 				->Event("NewDSPEffect", &AlternativeAudioDSPBus::Events::NewDSPEffect)
 				->Event("GetDSPEffectNames", &AlternativeAudioDSPBus::Events::GetDSPEffectNames)
@@ -1335,6 +1342,7 @@ namespace AlternativeAudio {
 
 			//Audio Device bus
 			behaviorContext->EBus<AlternativeAudioDeviceBus>("AlternativeAudioDeviceBus")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Event("NewDevice", &AlternativeAudioDeviceBus::Events::NewDevice)
 				->Event("GetPlaybackLibraryNames", &AlternativeAudioDeviceBus::Events::GetPlaybackLibraryNames)
 				->Event("GetPlaybackDevices", &AlternativeAudioDeviceBus::Events::GetPlaybackDevices)
@@ -1355,6 +1363,7 @@ namespace AlternativeAudio {
 
 			//volume dsp Ebus
 			behaviorContext->EBus<DSP::VolumeDSPBus>("AAVolumeDSPBus")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Event("SetVol", &DSP::VolumeDSPBus::Events::SetVol)
 				->Event("GetVol", &DSP::VolumeDSPBus::Events::GetVol);
 		}

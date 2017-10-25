@@ -458,6 +458,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AudioSourceTime>("AAAudioSourceTime")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("GetHours", &AudioSourceTime::GetHours)
 				->Method("GetMinutes", &AudioSourceTime::GetMinutes)
 				->Method("GetSeconds", &AudioSourceTime::GetSeconds)

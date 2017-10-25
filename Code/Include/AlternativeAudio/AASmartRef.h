@@ -22,6 +22,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AASmartRef>("AASmartRef")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("AddRef", &AASmartRef::AddRef)
 				->Method("Release", &AASmartRef::Release)
 				->Method("NumRefs", &AASmartRef::NumRefs);

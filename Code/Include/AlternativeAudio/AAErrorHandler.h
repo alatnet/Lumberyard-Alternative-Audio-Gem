@@ -21,6 +21,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AAError>("AAError")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("GetCode", &AAError::GetCode)
 				->Method("GetStr", &AAError::GetStr)
 				->Constant("code", &AAError::GetCode)
@@ -92,6 +93,7 @@ namespace AlternativeAudio {
 
 		static void Behavior(AZ::BehaviorContext* behaviorContext) {
 			behaviorContext->Class<AAErrorHandler>("AAErrorHandler")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Method("HasError", &AAErrorHandler::HasError)
 				->Method("GetError", &AAErrorHandler::GetError);
 		}
