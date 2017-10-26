@@ -1615,7 +1615,10 @@ namespace AlternativeAudio {
 	void AlternativeAudioSystemComponent::CleanCache() {
 		this->m_cacheThreshold.lock();
 		this->m_cleanCacheIt++;
-		if (this->m_cleanCacheIt >= this->m_cleanCacheThreshold) this->CleanCacheNow();
+		if (this->m_cleanCacheIt >= this->m_cleanCacheThreshold) {
+			this->CleanCacheNow();
+			this->m_cleanCacheIt = 0;
+		}
 		this->m_cacheThreshold.lock();
 	}
 	void AlternativeAudioSystemComponent::CleanCacheNow() {
