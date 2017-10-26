@@ -175,7 +175,7 @@ namespace AlternativeAudio {
 				this->m_pSrc = nullptr;
 			}
 
-			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path.c_str(), nullptr);
+			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
 			this->m_pSrc->AddRef();
 
 			//notify dsp effects that there is a new source
@@ -210,7 +210,7 @@ namespace AlternativeAudio {
 
 	void AudioSourceComponent::Activate() {
 		//load audio source
-		EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path.c_str(), nullptr);
+		EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
 		this->m_pSrc->AddRef();
 
 		this->BusConnect(this->GetEntityId());
@@ -261,7 +261,7 @@ namespace AlternativeAudio {
 				this->m_pSrc = nullptr;
 			}
 
-			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path.c_str(), nullptr);
+			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
 			this->m_pSrc->AddRef();
 
 			//notify dsp effects that there is a new source

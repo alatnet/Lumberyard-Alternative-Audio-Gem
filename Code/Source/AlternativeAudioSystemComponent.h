@@ -6,6 +6,11 @@
 #include <AlternativeAudio\DSP\AADSPEffectHandler.h>
 #include "Built-in DSP\InterlaceDSP.h"
 
+#include <AzCore/Math/Random.h>
+#include <AzCore\Component\TickBus.h>
+
+#define SOURCE_CACHE_STALE_COUNT 20
+
 namespace AlternativeAudio {
 	class AlternativeAudioSystemComponent
 		: public AZ::Component
@@ -14,6 +19,7 @@ namespace AlternativeAudio {
 		, protected AlternativeAudioDSPBus::Handler
 		, protected AlternativeAudioDeviceBus::Handler
 		, public AADSPDeviceEffectHandler
+		, public AZ::TickBus::Handler
 	{
 	public:
 		AlternativeAudioSystemComponent();
@@ -50,11 +56,34 @@ namespace AlternativeAudio {
 		// AlternativeAudioSourceBus interface implementation
 	protected: //IAudioSource
 		void RegisterAudioLibrary(AZStd::string libname, AZ::Crc32 crc, AZStd::vector<AZStd::string> filetypes, NewAudioSourceFunc ptr);
-		IAudioSource * NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata);
+		IAudioSource * NewAudioSource(AZ::Crc32 crc, AZStd::string path, void* userdata);
 		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetAudioLibraryNames() { return *(this->m_sourceLibNames); }
+	protected:
+		void ClearAllCache();
+		void ClearCache(AZ::Crc32 crc);
+		void ClearCacheFile(AZ::Crc32 crc, AZStd::string path);
+	protected:
+		void CleanCache();
+		void CleanCacheNow();
+		void SetCleanCacheThreshold(unsigned long long val);
+		unsigned long long GetCleanCacheThreshold();
 	private: //IAudioSource
 		AZStd::unordered_map<AZ::Crc32, NewAudioSourceFunc> *m_sourceLibFuncs;
 		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>> *m_sourceLibNames;
+
+		struct SourceCacheInfo {
+			unsigned long long stale{ SOURCE_CACHE_STALE_COUNT };
+			IAudioSourceLib * src{ nullptr };
+		};
+
+		using SourceMap = AZStd::unordered_map<AZStd::string, SourceCacheInfo*>;
+		using SourceMapPair = AZStd::pair<AZStd::string, SourceCacheInfo*>;
+		using LibSourceMap = AZStd::unordered_map<AZ::Crc32, SourceMap*>;
+		using LibSourceMapPair = AZStd::pair<AZ::Crc32, SourceMap*>;
+		LibSourceMap *m_sharedSources;
+
+		unsigned long long m_cleanCacheThreshold, m_cleanCacheIt;
+		AZStd::mutex m_cacheMutex, m_cacheThreshold;
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////
@@ -107,8 +136,16 @@ namespace AlternativeAudio {
 		AANullProvider m_nullProvider;
 		AZStd::vector<OAudioDeviceInfo> m_NullDeviceInfo;
 		OAudioDevice * m_MasterDevice;
-	////////////////////////////////////////////////////////////////////////
-
+		////////////////////////////////////////////////////////////////////////
+	private:
+		////////////////////////////////////////////////////////////////////////
+		// AZ::TickBus implementation
+		//used for random cache cleaning
+		void OnTick(float deltaTime, AZ::ScriptTimePoint time);
+		int GetTickOrder() { return AZ::TICK_LAST; }
+		AZ::SimpleLcgRandom m_rand;
+		////////////////////////////////////////////////////////////////////////
+	public:
 		////////////////////////////////////////////////////////////////////////
 		// AZ::Component interface implementation
 		void Init() override;
@@ -121,5 +158,55 @@ namespace AlternativeAudio {
 	private:
 		ConvertAudioFrameFunc defaultConvert, currentConvert;
 		MixAudioFramesFunc defaultMix, currentMix;
+	private:
+		bool m_commandsRegistered;
+	};
+
+	//used to share a common audio source between multiple areas but have different dsp effects.
+	class IAudioSourceShared : public IAudioSource {
+	public:
+		AZ_RTTI(IAudioSourceShared, "{02405B5D-BB87-4A00-934A-E8F58361773F}", IAudioSource);
+	public:
+		IAudioSourceShared(IAudioSourceLib* source) {
+			this->m_pSource = source;
+			this->m_pSource->AddRef();
+			this->m_type = source->GetFrameType();
+			this->m_pSource->AddErrorHandler(this);
+		}
+		~IAudioSourceShared() {
+			m_pSource->RemoveErrorHandler(this);
+			m_pSource->Release();
+		}
+	public:
+		bool Seek(long long position) {
+			return m_pSource->Seek(position);
+		}
+		long long GetFrames(long long framesToRead, float* buff) {
+			if (this->m_hasError) return 0;
+			long long ret = m_pSource->GetFrames(framesToRead, buff);
+			this->ProcessEffects(this->m_type, buff, ret, this);
+			return ret;
+		}
+		bool GetFrame(float* frame) {
+			if (this->m_hasError) return false;
+			bool ret = m_pSource->GetFrame(frame);
+			this->ProcessEffects(this->m_type, frame, 1, this);
+			return ret;
+		}
+		double GetSampleRate() {
+			return m_pSource->GetSampleRate();
+		}
+		const AlternativeAudio::AudioFrame::Type GetFrameType() {
+			return m_pSource->GetFrameType();
+		}
+		AudioSourceTime GetLength() {
+			return m_pSource->GetLength();
+		}
+		long long GetFrameLength() {
+			return m_pSource->GetFrameLength();
+		}
+	private:
+		IAudioSourceLib* m_pSource;
+		AlternativeAudio::AudioFrame::Type m_type;
 	};
 }

@@ -13,7 +13,7 @@
 
 namespace AlternativeAudio {
 	//function definitions
-	typedef AZStd::function<IAudioSource* (const char *, void*)> NewAudioSourceFunc;
+	typedef AZStd::function<IAudioSourceLib* (const char *, void*)> NewAudioSourceFunc;
 	typedef AZStd::function<AADSPEffect* (void*)> NewDSPEffectFunc;
 
 	typedef AZStd::function<void(AudioFrame::Frame* in, AudioFrame::Frame* out, AudioFrame::Type inType, AudioFrame::Type outType, long long len)> ConvertAudioFrameFunc;
@@ -50,8 +50,17 @@ namespace AlternativeAudio {
 		static const AZ::EBusAddressPolicy AddressPolicy = AZ::EBusAddressPolicy::Single;
 	public: //basic audio library system
 		virtual void RegisterAudioLibrary(AZStd::string libname, AZ::Crc32 crc, AZStd::vector<AZStd::string> filetypes, NewAudioSourceFunc ptr) = 0;
-		virtual IAudioSource * NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata) = 0;
+		virtual IAudioSource * NewAudioSource(AZ::Crc32 crc, AZStd::string path, void* userdata) = 0;
 		virtual AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetAudioLibraryNames() = 0;
+	public:
+		virtual void ClearAllCache() = 0; //removes all sources from all library caches
+		virtual void ClearCache(AZ::Crc32 crc) = 0; //removes all sources from a specific library cache
+		virtual void ClearCacheFile(AZ::Crc32 crc, AZStd::string path) = 0; //removes a specific source from a specific library cache
+	public:
+		virtual void CleanCache() = 0; //delays cache cleaning until threshold is reached.
+		virtual void CleanCacheNow() = 0; //forces the cleaning of the source cache.
+		virtual void SetCleanCacheThreshold(unsigned long long val) = 0;
+		virtual unsigned long long GetCleanCacheThreshold() = 0;
 	};
 	using AlternativeAudioSourceBus = AZ::EBus<AlternativeAudioSourceRequests>;
 

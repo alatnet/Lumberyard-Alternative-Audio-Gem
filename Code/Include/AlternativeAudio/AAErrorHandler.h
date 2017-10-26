@@ -29,6 +29,8 @@ namespace AlternativeAudio {
 		}
 	};
 
+	class AAErrorHandlerLib;
+
     class AAErrorHandler {
     public:
 		AZ_RTTI(AAErrorHandler, "{A68D2813-85F1-4B5E-ADFF-707DF729A8D0}");
@@ -36,7 +38,7 @@ namespace AlternativeAudio {
         AAErrorHandler() : m_hasError(false) {}
     public: //error checking
 		//returns if the audio source has an error.
-		bool HasError() {
+		virtual bool HasError() {
 			this->m_mutex.lock();
 			bool ret = this->m_hasError;
 			this->m_mutex.unlock();
@@ -46,7 +48,7 @@ namespace AlternativeAudio {
 		returns what the error is in a human readable format.
 		automatically clears error when there are no more errors to retrieve.
 		*/
-		AAError GetError() {
+		virtual AAError GetError() {
 			if (this->m_errors.size() == 0) {
 				AAError noErr;
 				this->m_hasError = false;
@@ -72,7 +74,7 @@ namespace AlternativeAudio {
 		- int errorCode - error code for the specific audio source (library dependent).
 		- const char * errorStr - human readable format for the error code.
 		*/
-		void pushError(int errorCode, const char * errorStr) {
+		virtual void pushError(int errorCode, const char * errorStr) {
 			AAError err;
 			err.code = errorCode;
 			err.str = errorStr;
@@ -97,5 +99,67 @@ namespace AlternativeAudio {
 				->Method("HasError", &AAErrorHandler::HasError)
 				->Method("GetError", &AAErrorHandler::GetError);
 		}
+	public:
+		friend class AAErrorHandlerLib;
+	};
+
+	//library only error handler
+	class AAErrorHandlerLib {
+	public:
+		AZ_RTTI(AAErrorHandlerLib, "{4DCAD32E-EDBC-4D3F-99B3-81D79AEAD3D3}");
+	public:
+		AAErrorHandlerLib() : m_hasError(false) {}
+	public:
+		void AddErrorHandler(AAErrorHandler* handler) {
+			this->m_mutex.lock();
+			this->m_errorHandlers.push_back(handler);
+			if (this->m_hasError) for (AAError err : this->m_errors) handler->pushError(err.code, err.str);
+			this->m_mutex.unlock();
+		}
+		void RemoveErrorHandler(AAErrorHandler* handler) {
+			this->m_mutex.lock();
+			/*auto it = AZStd::find(this->m_errorHandlers.begin(), this->m_errorHandlers.end(), handler);
+			if (it != this->m_errorHandlers.end())
+				this->m_errorHandlers.erase(it);*/
+			this->m_errorHandlers.erase(AZStd::remove(this->m_errorHandlers.begin(), this->m_errorHandlers.end(), handler), this->m_errorHandlers.end());
+			this->m_errorHandlers.shrink_to_fit();
+			this->m_mutex.unlock();
+		}
+	public:
+		bool HasError() {
+			this->m_mutex.lock();
+			return this->m_hasError;
+			this->m_mutex.unlock();
+		}
+		void ClearErrors() {
+			this->m_mutex.lock();
+			this->m_hasError = false;
+			this->m_errors.clear();
+			this->m_mutex.unlock();
+		}
+		unsigned int NumErrors() { return this->m_errors.size(); }
+		AAError GetError(unsigned int i) {
+			AAError err;
+			this->m_mutex.lock();
+			err = this->m_errors.at(i);
+			this->m_mutex.unlock();
+			return err;
+		}
+	protected:
+		bool m_hasError;
+		virtual void pushError(int errorCode, const char * errorStr) {
+			this->m_mutex.lock();
+			for (AAErrorHandler* handler : this->m_errorHandlers) handler->pushError(errorCode, errorStr);
+			this->m_hasError = true;
+			AAError err;
+			err.code = errorCode;
+			err.str = errorStr;
+			this->m_errors.push_back(err);
+			this->m_mutex.unlock();
+		}
+	private:
+		AZStd::vector<AAErrorHandler*> m_errorHandlers;
+		AZStd::vector<AAError> m_errors;
+		AZStd::mutex m_mutex;
 	};
 }

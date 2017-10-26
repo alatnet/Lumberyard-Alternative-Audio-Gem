@@ -16,9 +16,9 @@ namespace AlternativeAudio {
 		params:
 		- int - flags to set (usually ored "|" together).
 		*/
-		void SetFlags(long long flags) { this->m_flags = flags; }
+		virtual void SetFlags(long long flags) { this->m_flags = flags; }
 		//returns the flags set
-		long long GetFlags() { return this->m_flags; }
+		virtual long long GetFlags() { return this->m_flags; }
 	protected:
 		long long m_flags;
 	public:

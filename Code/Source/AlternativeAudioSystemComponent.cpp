@@ -10,6 +10,11 @@
 #include "Built-in DSP\VolumeDSP.h"
 
 #include <AzCore\RTTI\RTTI.h>
+#include <AzCore/Jobs/JobFunction.h>
+
+#include <IConsole.h>
+
+#define CACHECLEANRANDEXEC 10000
 
 namespace AlternativeAudio {
 	AlternativeAudioSystemComponent::AlternativeAudioSystemComponent() {
@@ -1158,6 +1163,10 @@ namespace AlternativeAudio {
 		this->m_MasterDevice = nullptr;
 		this->m_NullDeviceInfo = AZStd::vector<OAudioDeviceInfo>(0);
 		this->m_NullDeviceInfo.shrink_to_fit();
+
+		this->m_cleanCacheThreshold = 10000;
+		this->m_cleanCacheIt = 0;
+		this->m_commandsRegistered = false;
 	}
 
 	AlternativeAudioSystemComponent::~AlternativeAudioSystemComponent() {
@@ -1166,6 +1175,10 @@ namespace AlternativeAudio {
 
 		this->m_sourceLibNames->clear();
 		delete this->m_sourceLibNames;
+
+		//cleanup the shared sources.
+		this->ClearAllCache();
+		delete this->m_sharedSources;
 
 		this->m_dspLibFuncs->clear();
 		delete this->m_dspLibFuncs;
@@ -1326,7 +1339,17 @@ namespace AlternativeAudio {
 				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				//basic audio library system
 				->Event("NewAudioSource", &AlternativeAudioSourceBus::Events::NewAudioSource)
-				->Event("GetAudioLibraryNames", &AlternativeAudioSourceBus::Events::GetAudioLibraryNames);
+				->Event("GetAudioLibraryNames", &AlternativeAudioSourceBus::Events::GetAudioLibraryNames)
+				//----
+				->Event("ClearAllCache", &AlternativeAudioSourceBus::Events::ClearAllCache)
+				->Event("ClearCache", &AlternativeAudioSourceBus::Events::ClearCache)
+				->Event("ClearCacheFile", &AlternativeAudioSourceBus::Events::ClearCacheFile)
+				//----
+				->Event("CleanCache", &AlternativeAudioSourceBus::Events::CleanCache)
+				->Event("CleanCacheNow", &AlternativeAudioSourceBus::Events::CleanCacheNow)
+				->Event("SetCleanCacheThreshold", &AlternativeAudioSourceBus::Events::SetCleanCacheThreshold)
+				->Event("GetCleanCacheThreshold", &AlternativeAudioSourceBus::Events::GetCleanCacheThreshold)
+				;
 
 			//DSP Ebus
 			behaviorContext->EBus<AlternativeAudioDSPBus>("AlternativeAudioDSPBus")
@@ -1385,9 +1408,28 @@ namespace AlternativeAudio {
 		(void)dependent;
 	}
 
+	////////////////////////////////////////////////////////////////////////
+	// AZ::TickBus implementation
+	//used for random cache cleaning
+	void AlternativeAudioSystemComponent::OnTick(float deltaTime, AZ::ScriptTimePoint time) {
+		//randomly clean the cache
+		if ((this->m_rand.GetRandom() % CACHECLEANRANDEXEC) == 0) {
+			//spawn a new job to clean the cache.
+			AZ_Printf("[Alternative Audio]", "[Alternative Audio] Running cache cleanup.\n");
+			AZ::JobFunction<AZStd::function<void(void)>> * jobFunc =
+				new AZ::JobFunction<AZStd::function<void(void)>>(
+					[&]() -> void { this->CleanCache(); }
+					, true, nullptr
+				);
+			jobFunc->Start();
+		}
+	}
+	////////////////////////////////////////////////////////////////////////
+
 	void AlternativeAudioSystemComponent::Init() {
 		this->m_sourceLibFuncs = new AZStd::unordered_map<AZ::Crc32, NewAudioSourceFunc>();
 		this->m_sourceLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
+		this->m_sharedSources = new AZStd::unordered_map<AZ::Crc32, AZStd::unordered_map<AZStd::string, SourceCacheInfo*>*>();
 
 		this->m_dspLibFuncs = new AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc>();
 		this->m_dspLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
@@ -1420,6 +1462,46 @@ namespace AlternativeAudio {
 			AZ_CRC("AADeinterleave", 0x4a642bed),
 			[&](void* userdata)-> AADSPEffect* { return this->deinterlaceDSP; } //why create more than one deinterlace dsp effect?
 		);
+
+		/*if (gEnv && !this->m_commandsRegistered) {
+			AZ_Printf("[Alternative Audio]", "[Alternative Audio] Registering commands.\n");
+			IConsole* pConsole = gEnv->pSystem->GetIConsole();
+			pConsole->AddCommand("AA_CleanCache", [](IConsoleCmdArgs* args) -> void { EBUS_EVENT(AlternativeAudioSourceBus, CleanCache); });
+			pConsole->AddCommand("AA_CleanCacheNow", [](IConsoleCmdArgs* args) -> void { EBUS_EVENT(AlternativeAudioSourceBus, CleanCacheNow); });
+			pConsole->AddCommand("AA_ClearAllCache", [](IConsoleCmdArgs* args) -> void { EBUS_EVENT(AlternativeAudioSourceBus, ClearAllCache); });
+			pConsole->AddCommand("AA_ClearCache", [](IConsoleCmdArgs* args) -> void {
+				if (args->GetArgCount() != 2) return;
+				EBUS_EVENT(
+					AlternativeAudioSourceBus,
+					ClearCache,
+					AZ::Crc32(
+						AZStd::stoul(
+							AZStd::string(
+								args->GetArg(1)
+							)
+						)
+					)
+				);
+			});
+			pConsole->AddCommand("AA_ClearCacheFile", [](IConsoleCmdArgs* args) -> void {
+				if (args->GetArgCount() != 3) return;
+				EBUS_EVENT(
+					AlternativeAudioSourceBus,
+					ClearCacheFile,
+					AZ::Crc32(
+						AZStd::stoul(
+							AZStd::string(
+								args->GetArg(1)
+							)
+						)
+					),
+					AZStd::string(
+						args->GetArg(2)
+					)
+				);
+			});
+			this->m_commandsRegistered = true;
+		}*/
 	}
 
 	void AlternativeAudioSystemComponent::Activate() {
@@ -1427,6 +1509,7 @@ namespace AlternativeAudio {
 		AlternativeAudioSourceBus::Handler::BusConnect();
 		AlternativeAudioDSPBus::Handler::BusConnect();
 		AlternativeAudioDeviceBus::Handler::BusConnect();
+		AZ::TickBus::Handler::BusConnect();
 	}
 
 	void AlternativeAudioSystemComponent::Deactivate() {
@@ -1434,6 +1517,7 @@ namespace AlternativeAudio {
 		AlternativeAudioSourceBus::Handler::BusDisconnect();
 		AlternativeAudioDSPBus::Handler::BusDisconnect();
 		AlternativeAudioDeviceBus::Handler::BusDisconnect();
+		AZ::TickBus::Handler::BusDisconnect();
 	}
 
 	////////////////////////////////////////////////////////////////////////
@@ -1446,10 +1530,130 @@ namespace AlternativeAudio {
 
 		//build filetypes for audio asset
 	}
-	IAudioSource * AlternativeAudioSystemComponent::NewAudioSource(AZ::Crc32 crc, const char * path, void* userdata) {
+	IAudioSource * AlternativeAudioSystemComponent::NewAudioSource(AZ::Crc32 crc, AZStd::string path, void* userdata) {
+		this->m_cacheMutex.lock();
+
 		auto funcEntry = this->m_sourceLibFuncs->find(crc);
-		if (funcEntry != this->m_sourceLibFuncs->end()) return funcEntry->second(path, userdata);
+		if (funcEntry != this->m_sourceLibFuncs->end()) {
+			auto libraryCache = this->m_sharedSources->find(crc);
+			if (libraryCache != this->m_sharedSources->end()) { //if there is a library cache
+				auto librarySource = libraryCache->second->find(path);
+				if (librarySource != libraryCache->second->end()) { //if there is a library source
+					//return library source
+					librarySource->second->stale = SOURCE_CACHE_STALE_COUNT; //update stale count as the source is active again.
+					this->m_cacheMutex.unlock();
+					return new IAudioSourceShared(librarySource->second->src);
+				} else { //if there is no library source
+					//create a new library source
+					SourceCacheInfo * info = new SourceCacheInfo();
+					info->src = funcEntry->second(path.c_str(), userdata);
+					info->src->AddRef();
+					libraryCache->second->insert(SourceMapPair(path, info));
+					this->m_cacheMutex.unlock();
+					return new IAudioSourceShared(info->src);
+				}
+			} else { //if there is no library cache
+				//create a new library cache
+				auto pair = this->m_sharedSources->insert(LibSourceMapPair(crc, new SourceMap()));
+
+				//create a new library source
+				SourceCacheInfo * info = new SourceCacheInfo();
+				info->src = funcEntry->second(path.c_str(), userdata);
+				info->src->AddRef();
+				pair.first->second->insert(SourceMapPair(path, info));
+				this->m_cacheMutex.unlock();
+				return new IAudioSourceShared(info->src);
+			}
+		}
+
+		this->m_cacheMutex.unlock();
 		return nullptr;
+	}
+	//--------------
+	void AlternativeAudioSystemComponent::ClearAllCache() {
+		this->m_cacheMutex.lock();
+		auto shared_sources_libs_it = this->m_sharedSources->begin();
+		while (shared_sources_libs_it != this->m_sharedSources->end()) {
+			auto shared_sources_it = shared_sources_libs_it->second->begin();
+			while (shared_sources_it != shared_sources_libs_it->second->end()) {
+				shared_sources_it->second->src->Release();
+				++shared_sources_it;
+			}
+			shared_sources_libs_it->second->clear();
+			++shared_sources_libs_it;
+		}
+		this->m_sharedSources->clear();
+		this->m_cacheMutex.unlock();
+	}
+	void AlternativeAudioSystemComponent::ClearCache(AZ::Crc32 crc) {
+		this->m_cacheMutex.lock();
+		auto lib = this->m_sharedSources->find(crc);
+
+		if (lib != this->m_sharedSources->end()) {
+			auto it = lib->second->begin();
+			while (it != lib->second->end()) {
+				it->second->src->Release();
+				++it;
+			}
+			this->m_sharedSources->erase(crc);
+		}
+		this->m_cacheMutex.unlock();
+	}
+	void AlternativeAudioSystemComponent::ClearCacheFile(AZ::Crc32 crc, AZStd::string path) {
+		this->m_cacheMutex.lock();
+		auto lib = this->m_sharedSources->find(crc);
+		if (lib != this->m_sharedSources->end()) {
+			auto src = lib->second->find(path);
+			if (src != lib->second->end()) {
+				src->second->src->Release();
+				lib->second->erase(path);
+			}
+		}
+		this->m_cacheMutex.unlock();
+	}
+	//--------------
+	void AlternativeAudioSystemComponent::CleanCache() {
+		this->m_cacheThreshold.lock();
+		this->m_cleanCacheIt++;
+		if (this->m_cleanCacheIt >= this->m_cleanCacheThreshold) this->CleanCacheNow();
+		this->m_cacheThreshold.lock();
+	}
+	void AlternativeAudioSystemComponent::CleanCacheNow() {
+		this->m_cacheMutex.lock();
+		//scan and clean the cache.
+		auto srcLibsIt = this->m_sharedSources->begin();
+		while (srcLibsIt != this->m_sharedSources->end()) { //for each shared library cache
+			auto srcCacheIt = srcLibsIt->second->begin();
+			while (srcCacheIt != srcLibsIt->second->end()) { //for each source in the library cache
+				--(srcCacheIt->second->stale); //decrement the stale number
+				if (srcCacheIt->second->stale <= 0) { //if the source is stale
+					//delete it
+					srcCacheIt->second->src->Release();
+					srcCacheIt = srcLibsIt->second->erase(srcCacheIt);
+				} else {
+					++srcCacheIt;
+				}
+			}
+
+			if (srcLibsIt->second->size() == 0) { //if there is no more sources in the library cache
+				srcLibsIt = this->m_sharedSources->erase(srcLibsIt); //delete the library cache
+			} else {
+				++srcLibsIt;
+			}
+		}
+		this->m_cacheMutex.unlock();
+	}
+	void AlternativeAudioSystemComponent::SetCleanCacheThreshold(unsigned long long val) {
+		this->m_cacheThreshold.lock();
+		this->m_cleanCacheThreshold = val;
+		this->m_cacheThreshold.unlock();
+	}
+	unsigned long long AlternativeAudioSystemComponent::GetCleanCacheThreshold() {
+		unsigned long long ret = 0;
+		this->m_cacheThreshold.lock();
+		ret = this->m_cleanCacheThreshold;
+		this->m_cacheThreshold.unlock();
+		return ret;
 	}
 	////////////////////////////////////////////////////////////////////////
 	

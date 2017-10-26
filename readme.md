@@ -253,8 +253,8 @@ Do note that registration will work if two libraries will share the same name bu
 Example Library Gem: [Alternative Audio - Libsndfile Lumberyard Gem](https://github.com/alatnet/Lumberyard-Alternative-Audio-Libsndfile-Gem)  
 To start off, create a gem to hold your code.  
 How you code the library gem is up to you but the instructions layed out is how I have coded a library gem.  
-Create a class and have it inherit from AlternativeAudio\:\:IAudioSource which is provided by the include "AlternativeAudio\AudioSource\IAudioSource.h".  
-The IAudioSoruce is a class to handle reading data from an audio file or source and is required that you implement all of the required functions.  
+Create a class and have it inherit from AlternativeAudio\:\:IAudioSourceLib which is provided by the include "AlternativeAudio\AudioSource\IAudioSource.h".  
+The IAudioSourceLib is a class to handle reading data from an audio file or source and is required that you implement all of the required functions.  
 After an audio source has been coded it is time to register the library with Alternative Audio itself.  
 This is required only once.  
 In the system gem's Activate function, you use the Alternative Audio's "RegisterAudioLibrary" ebus function provided by AlternativeAudioSourceBus.  
@@ -270,7 +270,7 @@ EBUS_EVENT(
     AZ_CRC("<Library Name>"),
     filetypes, //a vector of filetypes that the source provides
     // you can use a lambda function or a separate class function to provide a new audio source.
-    [](const char * path, void * userdata)-> AlternativeAudio::IAudioSource* {
+    [](const char * path, void * userdata)-> AlternativeAudio::IAudioSourceLib* {
 	    return new AudioSourceClass(path);
     }
 );
@@ -291,7 +291,7 @@ EBUS_EVENT(
     "<Library Name>",
     AZ_CRC("<Library Name>"),
     // you can use a lambda function or a separate class function to provide a new DSP effect.
-    [](void* userdata)-> AADSPEffect* { return new DSP::VolumeDSPEffect(userdata); }
+    [](void* userdata)-> AADSPEffect* { return new DSPEffectClass(userdata); }
 );
 ```
 As stated with the audio library gem creation, two libraries can share the same name but the second one will not be accessable.

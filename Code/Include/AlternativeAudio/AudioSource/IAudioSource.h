@@ -11,20 +11,16 @@
 #include <AlternativeAudio\AASmartRef.h>
 
 namespace AlternativeAudio {
-	//class to deal with reading audio sources
+
+	//class to deal with reading audio source from a library.
 	//input source
-	class IAudioSource
-		: public AAErrorHandler
+	class IAudioSourceLib
+		: public AAErrorHandlerLib
 		, public AAFlagHandler
-		, public AADSPEffectHandler
 		, public AASmartRef
 	{
 	public:
-		AZ_RTTI(IAudioSource, "{FA8714F6-E26F-4420-9230-F46F84A99320}", AAErrorHandler, AAFlagHandler, AADSPEffectHandler, AASmartRef);
-	//public:
-		//IAudioSource(const char * path, void* userdata) {}
-	//public: //Developers, call this to initialize variables or initialize the variables yourself.
-		//IAudioSource() : m_flags(0) {}
+		AZ_RTTI(IAudioSourceLib, "{FC787633-E346-4547-9A30-311C2E5767AF}", AAErrorHandlerLib, AAFlagHandler, AASmartRef);
 	public:
 		//seek to a position on the audio source (in frames)
 		virtual bool Seek(long long position) = 0;
@@ -57,13 +53,31 @@ namespace AlternativeAudio {
 		virtual AudioSourceTime GetLength() = 0;
 		//returns the length of the audio source in frames.
 		virtual long long GetFrameLength() = 0;
+	};
+
+	//input source
+	class IAudioSource
+		: public AAErrorHandler
+		, public AAFlagHandler
+		, public AADSPEffectHandler
+		, public AASmartRef
+	{
+	public:
+		AZ_RTTI(IAudioSource, "{FA8714F6-E26F-4420-9230-F46F84A99320}", AAErrorHandler, AAFlagHandler, AADSPEffectHandler, AASmartRef);
+	public:
+		virtual bool Seek(long long position) = 0;
+		virtual long long GetFrames(long long framesToRead, float* buff) = 0;
+		virtual bool GetFrame(float* frame) = 0;
+		virtual double GetSampleRate() = 0;
+		virtual const AlternativeAudio::AudioFrame::Type GetFrameType() = 0;
+		virtual AudioSourceTime GetLength() = 0;
+		virtual long long GetFrameLength() = 0;
 	public:
 			static void Reflect(AZ::SerializeContext* serialize) {
 				serialize->Class<IAudioSource, AAErrorHandler, AAFlagHandler, AADSPEffectHandler>()
 					->Version(0)
 					->SerializerForEmptyClass();
 			}
-
 			static void Behavior(AZ::BehaviorContext* behaviorContext) {
 				///audio source
 				behaviorContext->Class<IAudioSource>("IAudioSource")
