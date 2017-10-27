@@ -31,6 +31,9 @@
       "Include/AlternativeAudio/Components/AudioSourceComponentBus.h",
       "Include/AlternativeAudio/Components/DSPEffectComponentBus.h"
     ],
+    "Include/Components/DSP": [
+      "Include/AlternativeAudio/Components/DSP/VolumeDSPComponentBus.h"
+    ],
     "Source": [
       "Source/AlternativeAudioModule.cpp"
     ],
@@ -47,6 +50,10 @@
       "Source/Components/AudioSourceComponent.h",
       "Source/Components/DSPEffectComponent.cpp",
       "Source/Components/DSPEffectComponent.h"
+    ],
+    "Source/Components/DSP": [
+      "Source/Components/DSP/VolumeDSPComponent.cpp",
+      "Source/Components/DSP/VolumeDSPComponent.h"
     ]
   }
 }

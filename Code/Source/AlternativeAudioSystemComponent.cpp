@@ -1186,6 +1186,15 @@ namespace AlternativeAudio {
 		this->m_dspLibNames->clear();
 		delete this->m_dspLibNames;
 
+		//release the dsp's.
+		auto dspPairIt = this->m_sharedDSP->begin();
+		while (dspPairIt != this->m_sharedDSP->end()) {
+			dspPairIt->second->Release();
+			++dspPairIt;
+		}
+		this->m_sharedDSP->clear();
+		delete this->m_sharedDSP;
+
 		this->m_deviceProviders->clear();
 		delete this->m_deviceProviders;
 
@@ -1207,18 +1216,6 @@ namespace AlternativeAudio {
 
 		this->SetMasterDevice(nullptr);
 	}
-
-	/*
-	public:
-		static void Reflect(AZ::SerializeContext* serialize) {
-			serialize->Class<>()
-				->Version(0)
-				->SerializerForEmptyClass();
-		}
-
-		static void Behavior(AZ::BehaviorContext* behaviorContext) {
-		}
-	*/
 
 	void AlternativeAudioSystemComponent::Reflect(AZ::ReflectContext* context) {
 		if (AZ::SerializeContext* serialize = azrtti_cast<AZ::SerializeContext*>(context)) {
@@ -1415,6 +1412,7 @@ namespace AlternativeAudio {
 		//randomly clean the cache
 		if ((this->m_rand.GetRandom() % CACHECLEANRANDEXEC) == 0) {
 			//spawn a new job to clean the cache.
+			///because mutexes are not allowed in OnTick.
 			AZ_Printf("[Alternative Audio]", "[Alternative Audio] Running cache cleanup.\n");
 			AZ::JobFunction<AZStd::function<void(void)>> * jobFunc =
 				new AZ::JobFunction<AZStd::function<void(void)>>(
@@ -1427,15 +1425,17 @@ namespace AlternativeAudio {
 	////////////////////////////////////////////////////////////////////////
 
 	void AlternativeAudioSystemComponent::Init() {
-		this->m_sourceLibFuncs = new AZStd::unordered_map<AZ::Crc32, NewAudioSourceFunc>();
-		this->m_sourceLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
-		this->m_sharedSources = new AZStd::unordered_map<AZ::Crc32, AZStd::unordered_map<AZStd::string, SourceCacheInfo*>*>();
+		this->m_sourceLibFuncs = new SourceLibMap();
+		this->m_sourceLibNames = new SourceLibNameVector();
+		this->m_sharedSources = new LibSourceCacheMap();
 
-		this->m_dspLibFuncs = new AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc>();
-		this->m_dspLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
+		this->m_dspLibFuncs = new DSPLibMap();
+		this->m_dspLibNames = new DSPLibNameVector();
 
-		this->m_deviceProviders = new AZStd::unordered_map<AZ::Crc32, OAudioDeviceProvider*>();
-		this->m_deviceLibNames = new AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>();
+		this->m_sharedDSP = new SharedDSPMap();
+
+		this->m_deviceProviders = new DeviceProvidersMap();
+		this->m_deviceLibNames = new DeviceLibNameVector();
 		
 		////this->m_dspEffects = new AZStd::unordered_map<unsigned long long, AADSPEffect *>[eDS_Count];
 		//this->m_dspEffects = new std::map<unsigned long long, AADSPEffect *>[eDS_Count];
@@ -1525,8 +1525,8 @@ namespace AlternativeAudio {
 	//--------------
 	//IAudioSource
 	void AlternativeAudioSystemComponent::RegisterAudioLibrary(AZStd::string libname, AZ::Crc32 crc, AZStd::vector<AZStd::string> filetypes, NewAudioSourceFunc ptr) {
-		this->m_sourceLibFuncs->insert({ crc, ptr });
-		this->m_sourceLibNames->push_back({ libname, crc });
+		this->m_sourceLibFuncs->insert(SourceLibMapPair(crc, ptr));
+		this->m_sourceLibNames->push_back(SourceLibNamesPair(libname, crc));
 
 		//build filetypes for audio asset
 	}
@@ -1534,7 +1534,7 @@ namespace AlternativeAudio {
 		this->m_cacheMutex.lock();
 
 		auto funcEntry = this->m_sourceLibFuncs->find(crc);
-		if (funcEntry != this->m_sourceLibFuncs->end()) {
+		if (funcEntry != this->m_sourceLibFuncs->end()) { //if the library is valid
 			auto libraryCache = this->m_sharedSources->find(crc);
 			if (libraryCache != this->m_sharedSources->end()) { //if there is a library cache
 				auto librarySource = libraryCache->second->find(path);
@@ -1548,19 +1548,19 @@ namespace AlternativeAudio {
 					SourceCacheInfo * info = new SourceCacheInfo();
 					info->src = funcEntry->second(path.c_str(), userdata);
 					info->src->AddRef();
-					libraryCache->second->insert(SourceMapPair(path, info));
+					libraryCache->second->insert(SourceCacheMapPair(path, info));
 					this->m_cacheMutex.unlock();
 					return new IAudioSourceShared(info->src);
 				}
 			} else { //if there is no library cache
 				//create a new library cache
-				auto pair = this->m_sharedSources->insert(LibSourceMapPair(crc, new SourceMap()));
+				auto pair = this->m_sharedSources->insert(LibSourceCacheMapPair(crc, new SourceCacheMap()));
 
 				//create a new library source
 				SourceCacheInfo * info = new SourceCacheInfo();
 				info->src = funcEntry->second(path.c_str(), userdata);
 				info->src->AddRef();
-				pair.first->second->insert(SourceMapPair(path, info));
+				pair.first->second->insert(SourceCacheMapPair(path, info));
 				this->m_cacheMutex.unlock();
 				return new IAudioSourceShared(info->src);
 			}
@@ -1663,8 +1663,8 @@ namespace AlternativeAudio {
 	////////////////////////////////////////////////////////////////////////
 	// AlternativeAudioDSPBus
 	void AlternativeAudioSystemComponent::RegisterDSPEffect(AZStd::string libname, AZ::Crc32 crc, NewDSPEffectFunc ptr) {
-		this->m_dspLibFuncs->insert({ crc, ptr });
-		this->m_dspLibNames->push_back({ libname, crc });
+		this->m_dspLibFuncs->insert(DSPLibMapPair(crc, ptr));
+		this->m_dspLibNames->push_back(DSPLibNamePair(libname, crc));
 	}
 	AADSPEffect * AlternativeAudioSystemComponent::NewDSPEffect(AZ::Crc32 crc, void* userdata) {
 		auto funcEntry = this->m_dspLibFuncs->find(crc);
@@ -1672,7 +1672,31 @@ namespace AlternativeAudio {
 		return nullptr;
 	}
 	//--------------
+	AADSPEffect * AlternativeAudioSystemComponent::GetSharedDSPEffect(AZStd::string tag, AZ::Crc32 crc, void * userdata) {
+		//if there's already a dsp effect
+		auto sharedDSPIt = this->m_sharedDSP->find(tag);
+		if (sharedDSPIt != this->m_sharedDSP->end()) {
+			return new AADSPEffectShared(tag, sharedDSPIt->second); //return it ///ref++
+		}
 
+		//otherwise create a new dsp effect
+		AADSPEffect* dspEffect = this->NewDSPEffect(crc, userdata);
+		this->m_sharedDSP->insert(SharedDSPMapPair(tag, dspEffect));
+		dspEffect->AddRef(); ///ref 1
+		return new AADSPEffectShared(tag, dspEffect); ///ref 2
+	}
+	void AlternativeAudioSystemComponent::ReleaseSharedDSPEffect(AZStd::string tag) {
+		auto sharedDSPIt = this->m_sharedDSP->find(tag);
+		if (sharedDSPIt != this->m_sharedDSP->end()) {
+			sharedDSPIt->second->Release(); ///ref--
+
+			if (sharedDSPIt->second->NumRefs() == 1) { //we are the only reference left
+				sharedDSPIt->second->Release(); ///ref 0, delete
+				this->m_sharedDSP->erase(sharedDSPIt);
+			}
+		}
+	}
+	//--------------
 	bool AlternativeAudioSystemComponent::AddEffect(AADSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot) {
 		AADSPEffect * effect = this->NewDSPEffect(crc, userdata);
 		if (effect != nullptr) {
@@ -1685,19 +1709,35 @@ namespace AlternativeAudio {
 		AADSPEffect * effect = this->NewDSPEffect(crc, userdata);
 		if (effect != nullptr) {
 			unsigned long long ret = AADSPDeviceEffectHandler::AddEffectFreeSlot(section, effect);
-			if (ret >= 0) return ret;
+			if (ret != (unsigned long long)(-1)) return ret;
 			delete effect;
-			return ret;
 		}
-		return -3;
+		return -1;
+	}
+	bool AlternativeAudioSystemComponent::AddSharedEffect(AZStd::string tag, AADSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot) {
+		AADSPEffect * effect = this->GetSharedDSPEffect(tag, crc, userdata);
+		if (effect != nullptr) {
+			if (AADSPDeviceEffectHandler::AddEffect(section, effect, slot)) return true;
+			delete effect;
+		}
+		return false;
+	}
+	unsigned long long AlternativeAudioSystemComponent::AddSharedEffectFreeSlot(AZStd::string tag, AADSPSection section, AZ::Crc32 crc, void* userdata) {
+		AADSPEffect * effect = this->GetSharedDSPEffect(tag, crc, userdata);
+		if (effect != nullptr) {
+			unsigned long long ret = AADSPDeviceEffectHandler::AddEffectFreeSlot(section, effect);
+			if (ret != (unsigned long long)(-1)) return ret;
+			delete effect;
+		}
+		return -1;
 	}
 	////////////////////////////////////////////////////////////////////////
 
 	////////////////////////////////////////////////////////////////////////
 	// AlternativeAudioDeviceBus
 	void AlternativeAudioSystemComponent::RegisterPlaybackLibrary(AZStd::string libname, AZ::Crc32 crc, OAudioDeviceProvider* ptr) {
-		this->m_deviceProviders->insert({ crc, ptr });
-		this->m_deviceLibNames->push_back({ libname, crc });
+		this->m_deviceProviders->insert(DeviceProvidersMapPair(crc, ptr));
+		this->m_deviceLibNames->push_back(DeviceLibNamePair(libname, crc));
 	}
 	OAudioDevice * AlternativeAudioSystemComponent::NewDevice(AZ::Crc32 crc, long long device, double samplerate, AlternativeAudio::AudioFrame::Type audioFormat, void* userdata) {
 		auto providerEntry = this->m_deviceProviders->find(crc);
@@ -1793,126 +1833,6 @@ namespace AlternativeAudio {
 	#undef IF_DEVICE
 	#undef IF_DEVICE_RET
 	////////////////////////////////////////////////////////////////////////
-
-	/*int GetSection(DSPSection section) {
-		switch (section) {
-		case eDS_PerSource_BC:
-			return 0;
-		case eDS_PerSource_AC:
-			return 1;
-		case eDS_PerSource_ARS:
-			return 2;
-		case eDS_Output:
-			return 3;
-		}
-		return 0;
-	}*/
-
-	//--------------
-	//basic DSP system
-	//bool AlternativeAudioSystemComponent::AddDSPEffect(DSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot) {
-	//	int sectionInt = GetSection(section);
-	//	if (this->m_dspEffects[sectionInt].count(slot) == 0) {
-	//		AADSPEffect* effect = this->NewDSPEffect(crc, userdata);
-
-	//		if (effect->GetDSPSection() & section) {
-	//			this->m_dspEffects[sectionInt][slot] = effect;
-	//			effect->AddRef();
-	//			return true; //dsp effect is added to slot specified
-	//		}
-
-	//		delete effect;
-	//		return false; //dsp effect is not suited for section specified
-	//	}
-	//	return false; //slot already has a dsp effect.
-	//}
-	//unsigned long long AlternativeAudioSystemComponent::AddDSPEffectFreeSlot(DSPSection section, AZ::Crc32 crc, void* userdata) {
-	//	int sectionInt = GetSection(section);
-
-	//	AADSPEffect* effect = this->NewDSPEffect(crc, userdata);
-	//	effect->AddRef();
-	//	if (!(effect->GetDSPSection() & section)) {
-	//		//delete effect;
-	//		effect->Release();
-	//		return -1; //dsp is not for this specific dsp section
-	//	}
-
-	//	if (this->m_dspEffects[sectionInt].empty()) {
-	//		this->m_dspEffects[sectionInt][0] = effect;
-	//		//effect->AddRef();
-	//		return 0;
-	//	}
-
-	//	//find an open slot
-	//	auto end = this->m_dspEffects[sectionInt].rbegin();
-
-	//	unsigned long long open = end->first+1; //store the next open end index
-
-	//	for (auto it = this->m_dspEffects[sectionInt].begin(); it != --this->m_dspEffects[sectionInt].end(); it++) {
-	//		auto it2 = it;
-	//		it2++;
-
-	//		if (it->first + 1 != it2->first) {
-	//			//open slot
-	//			open = it->first + 1;
-	//			this->m_dspEffects[sectionInt][open] = effect;
-	//			return open;
-	//		}
-	//	}
-
-	//	this->m_dspEffects[sectionInt][open] = effect; //add effect to end
-	//	return open;
-	//}
-
-	//AADSPEffect * AlternativeAudioSystemComponent::GetDSPEffect(DSPSection section, unsigned long long slot) {
-	//	int sectionInt = GetSection(section);
-	//	return this->m_dspEffects[sectionInt].at(slot);
-	//}
-
-	//bool AlternativeAudioSystemComponent::RemoveDSPEffect(DSPSection section, unsigned long long slot) {
-	//	int sectionInt = GetSection(section);
-	//	if (this->m_dspEffects[sectionInt].at(slot) != nullptr) {
-	//		//delete this->m_dspEffects[section][slot];
-	//		this->m_dspEffects[sectionInt][slot]->Release();
-	//		this->m_dspEffects[sectionInt].erase(slot);
-	//		return true; //dsp effect removed.
-	//	}
-	//	return false; //there is no dsp effect in slot specified
-	//}
-	//void AlternativeAudioSystemComponent::ProcessDSPEffects(DSPSection section, AudioFrame::Type format, float* buffer, long long len) {
-	//	int sectionInt = GetSection(section);
-	//	for (std::pair<unsigned long long, AADSPEffect *> effect : this->m_dspEffects[sectionInt]) {
-	//		switch (effect.second->GetProcessType()) {
-	//		case eDPT_Buffer:
-	//			effect.second->Process(format, buffer, len);
-	//			break;
-	//		case eDPT_Frame:
-
-	//			#define CASE_FORMAT(Format) \
-	//				case AlternativeAudio::AudioFrame::Type::eT_##Format##: \
-	//				{ \
-	//					AlternativeAudio::AudioFrame::##Format##* buff = (AlternativeAudio::AudioFrame::##Format##*)buffer; \
-	//					for (long long i = 0; i < len; i++) effect.second->ProcessFrame(format, (float*)&buff[i]); \
-	//				}
-
-	//			switch (format) {
-	//				CASE_FORMAT(af1)
-	//				CASE_FORMAT(af2)
-	//				CASE_FORMAT(af21)
-	//				CASE_FORMAT(af3)
-	//				CASE_FORMAT(af31)
-	//				CASE_FORMAT(af4)
-	//				CASE_FORMAT(af41)
-	//				CASE_FORMAT(af5)
-	//				CASE_FORMAT(af51)
-	//				CASE_FORMAT(af7)
-	//				CASE_FORMAT(af71)
-	//			}
-	//			break;
-	//			#undef CASE_FORMAT
-	//		}
-	//	}
-	//}
 	
 	//--------------
 	void AlternativeAudioSystemComponent::SetConvertFunction(ConvertAudioFrameFunc convertFunc) {

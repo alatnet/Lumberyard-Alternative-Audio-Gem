@@ -12,7 +12,7 @@
 	"Uuid": "b4745a69bade49a3aacc01e4475bdee7",
 	"Name": "AlternativeAudio",
 	"DisplayName": "AlternativeAudio",
-	"Version": "4.1.1",
+	"Version": "4.2.0",
 	"LinkType": "Dynamic",
 	"Summary": "A system to implement alternative audio systems within lumberyard",
 	"Tags": [ "Audio", "Alternative Audio" ],

@@ -57,7 +57,7 @@ namespace AlternativeAudio {
 	protected: //IAudioSource
 		void RegisterAudioLibrary(AZStd::string libname, AZ::Crc32 crc, AZStd::vector<AZStd::string> filetypes, NewAudioSourceFunc ptr);
 		IAudioSource * NewAudioSource(AZ::Crc32 crc, AZStd::string path, void* userdata);
-		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetAudioLibraryNames() { return *(this->m_sourceLibNames); }
+		SourceLibNameVector& GetAudioLibraryNames() { return *(this->m_sourceLibNames); }
 	protected:
 		void ClearAllCache();
 		void ClearCache(AZ::Crc32 crc);
@@ -68,19 +68,22 @@ namespace AlternativeAudio {
 		void SetCleanCacheThreshold(unsigned long long val);
 		unsigned long long GetCleanCacheThreshold();
 	private: //IAudioSource
-		AZStd::unordered_map<AZ::Crc32, NewAudioSourceFunc> *m_sourceLibFuncs;
-		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>> *m_sourceLibNames;
+		using SourceLibMap = AZStd::unordered_map<AZ::Crc32, NewAudioSourceFunc>;
+		using SourceLibMapPair = AZStd::pair<AZ::Crc32, NewAudioSourceFunc>;
+		SourceLibMap *m_sourceLibFuncs;
+
+		SourceLibNameVector *m_sourceLibNames;
 
 		struct SourceCacheInfo {
 			unsigned long long stale{ SOURCE_CACHE_STALE_COUNT };
 			IAudioSourceLib * src{ nullptr };
 		};
 
-		using SourceMap = AZStd::unordered_map<AZStd::string, SourceCacheInfo*>;
-		using SourceMapPair = AZStd::pair<AZStd::string, SourceCacheInfo*>;
-		using LibSourceMap = AZStd::unordered_map<AZ::Crc32, SourceMap*>;
-		using LibSourceMapPair = AZStd::pair<AZ::Crc32, SourceMap*>;
-		LibSourceMap *m_sharedSources;
+		using SourceCacheMap = AZStd::unordered_map<AZStd::string, SourceCacheInfo*>;
+		using SourceCacheMapPair = AZStd::pair<AZStd::string, SourceCacheInfo*>;
+		using LibSourceCacheMap = AZStd::unordered_map<AZ::Crc32, SourceCacheMap*>;
+		using LibSourceCacheMapPair = AZStd::pair<AZ::Crc32, SourceCacheMap*>;
+		LibSourceCacheMap *m_sharedSources;
 
 		unsigned long long m_cleanCacheThreshold, m_cleanCacheIt;
 		AZStd::mutex m_cacheMutex, m_cacheThreshold;
@@ -91,17 +94,29 @@ namespace AlternativeAudio {
 	protected: //AADSPEffect
 		void RegisterDSPEffect(AZStd::string libname, AZ::Crc32 crc, NewDSPEffectFunc ptr);
 		AADSPEffect * NewDSPEffect(AZ::Crc32 crc, void* userdata);
-		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetDSPEffectNames() { return *(this->m_dspLibNames); }
+		DSPLibNameVector& GetDSPEffectNames() { return *(this->m_dspLibNames); }
+	protected:
+		AADSPEffect * GetSharedDSPEffect(AZStd::string tag, AZ::Crc32 crc, void * userdata);
+		void ReleaseSharedDSPEffect(AZStd::string tag);
 	protected: //basic DSP system //remove as moving it to AADSPDeviceEffectHandler?
 		bool AddEffect(AADSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot);
 		unsigned long long AddEffectFreeSlot(AADSPSection section, AZ::Crc32 crc, void* userdata);
+		bool AddSharedEffect(AZStd::string tag, AADSPSection section, AZ::Crc32 crc, void* userdata, unsigned long long slot);
+		unsigned long long AddSharedEffectFreeSlot(AZStd::string tag, AADSPSection section, AZ::Crc32 crc, void* userdata);
 		AADSPEffect * GetEffect(AADSPSection section, unsigned long long slot) { return AADSPDeviceEffectHandler::GetEffect(section, slot); }
 		bool RemoveEffect(AADSPSection section, unsigned long long slot) { return AADSPDeviceEffectHandler::RemoveEffect(section, slot); }
 		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) { AADSPDeviceEffectHandler::ProcessEffects(section, format, buffer, len, flags); }
 		AADSPDeviceEffectHandler* GetDSPDeviceEffectHandler() { return (AADSPDeviceEffectHandler*)this; }
 	private: //AADSPEffect
-		AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc> *m_dspLibFuncs;
-		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>> *m_dspLibNames;
+		using DSPLibMap = AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc>;
+		using DSPLibMapPair = AZStd::pair<AZ::Crc32, NewDSPEffectFunc>;
+		DSPLibMap *m_dspLibFuncs;
+
+		DSPLibNameVector *m_dspLibNames;
+
+		using SharedDSPMap = AZStd::unordered_map<AZStd::string, AADSPEffect*>;
+		using SharedDSPMapPair = AZStd::pair<AZStd::string, AADSPEffect*>;
+		SharedDSPMap *m_sharedDSP;
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////
@@ -109,8 +124,8 @@ namespace AlternativeAudio {
 	protected:
 		void RegisterPlaybackLibrary(AZStd::string libname, AZ::Crc32 crc, OAudioDeviceProvider* ptr);
 		OAudioDevice * NewDevice(AZ::Crc32 crc, long long device, double samplerate, AlternativeAudio::AudioFrame::Type audioFormat, void* userdata);
-		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>>& GetPlaybackLibraryNames() { return *(this->m_deviceLibNames); }
-		AZStd::vector<OAudioDeviceInfo>& GetPlaybackDevices(AZ::Crc32 playbackLib);
+		DeviceLibNameVector& GetPlaybackLibraryNames() { return *(this->m_deviceLibNames); }
+		DeviceInfoVector& GetPlaybackDevices(AZ::Crc32 playbackLib);
 		long long GetDefaultPlaybackDevice(AZ::Crc32 playbackLib);
 		OAudioDeviceProvider* GetDeviceProvider(AZ::Crc32 playbackLib);
 	protected:
@@ -131,10 +146,14 @@ namespace AlternativeAudio {
 		virtual void StopAll();
 		void Queue(bool startstop);
 	private:
-		AZStd::unordered_map<AZ::Crc32, OAudioDeviceProvider*> *m_deviceProviders;
-		AZStd::vector<AZStd::pair<AZStd::string, AZ::Crc32>> *m_deviceLibNames;
+		using DeviceProvidersMap = AZStd::unordered_map<AZ::Crc32, OAudioDeviceProvider*>;
+		using DeviceProvidersMapPair = AZStd::pair<AZ::Crc32, OAudioDeviceProvider*>;
+		DeviceProvidersMap *m_deviceProviders;
+
+		DeviceLibNameVector *m_deviceLibNames;
+
 		AANullProvider m_nullProvider;
-		AZStd::vector<OAudioDeviceInfo> m_NullDeviceInfo;
+		DeviceInfoVector m_NullDeviceInfo;
 		OAudioDevice * m_MasterDevice;
 		////////////////////////////////////////////////////////////////////////
 	private:
@@ -174,39 +193,59 @@ namespace AlternativeAudio {
 			this->m_pSource->AddErrorHandler(this);
 		}
 		~IAudioSourceShared() {
-			m_pSource->RemoveErrorHandler(this);
-			m_pSource->Release();
+			this->m_pSource->RemoveErrorHandler(this);
+			this->m_pSource->Release();
 		}
 	public:
-		bool Seek(long long position) {
-			return m_pSource->Seek(position);
-		}
+		bool Seek(long long position) { return this->m_pSource->Seek(position); }
 		long long GetFrames(long long framesToRead, float* buff) {
 			if (this->m_hasError) return 0;
-			long long ret = m_pSource->GetFrames(framesToRead, buff);
+			long long ret = this->m_pSource->GetFrames(framesToRead, buff);
 			this->ProcessEffects(this->m_type, buff, ret, this);
 			return ret;
 		}
 		bool GetFrame(float* frame) {
 			if (this->m_hasError) return false;
-			bool ret = m_pSource->GetFrame(frame);
+			bool ret = this->m_pSource->GetFrame(frame);
 			this->ProcessEffects(this->m_type, frame, 1, this);
 			return ret;
 		}
-		double GetSampleRate() {
-			return m_pSource->GetSampleRate();
-		}
-		const AlternativeAudio::AudioFrame::Type GetFrameType() {
-			return m_pSource->GetFrameType();
-		}
-		AudioSourceTime GetLength() {
-			return m_pSource->GetLength();
-		}
-		long long GetFrameLength() {
-			return m_pSource->GetFrameLength();
-		}
+		double GetSampleRate() { return this->m_pSource->GetSampleRate(); }
+		const AlternativeAudio::AudioFrame::Type GetFrameType() { return this->m_pSource->GetFrameType(); }
+		AudioSourceTime GetLength() { return this->m_pSource->GetLength(); }
+		long long GetFrameLength() { return this->m_pSource->GetFrameLength(); }
+	public:
+		operator IAudioSourceLib*() { return this->m_pSource; }
 	private:
 		IAudioSourceLib* m_pSource;
 		AlternativeAudio::AudioFrame::Type m_type;
+	};
+
+	class AADSPEffectShared : public AADSPEffect {
+	public:
+		AZ_RTTI(AADSPEffectShared, "{ED908D8E-C7F7-41A8-AE4E-283AD472BF5C}", AADSPEffect);
+	public:
+		AADSPEffectShared(AZStd::string tag, AADSPEffect* effect) {
+			this->m_pDSPEffect = effect;
+			this->m_pDSPEffect->AddRef(); //ref++
+			this->m_tag = tag;
+		}
+		~AADSPEffectShared() {
+			//this->m_pDSPEffect->Release(); //ref--
+			EBUS_EVENT(AlternativeAudioDSPBus, ReleaseSharedDSPEffect, this->m_tag); //ref--
+		}
+	public:
+		AZStd::string GetName() { return this->m_pDSPEffect->GetName(); }
+		int GetDSPSection() { return this->m_pDSPEffect->GetDSPSection(); }
+		AADSPProcessType GetProcessType() { return this->m_pDSPEffect->GetProcessType(); }
+	public:
+		void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags) { this->m_pDSPEffect->Process(format, buffer, len, flags); }
+		void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags) { this->m_pDSPEffect->ProcessFrame(format, frame, flags); }
+	public:
+		operator AADSPEffect*() override { return this->m_pDSPEffect; }
+		virtual AADSPEffect* get() override { return this->m_pDSPEffect; }
+	private:
+		AADSPEffect* m_pDSPEffect;
+		AZStd::string m_tag;
 	};
 }

@@ -143,7 +143,7 @@ namespace AlternativeAudio {
 			return false; //slot already has a dsp effect.
 		}
 		unsigned long long AddEffectFreeSlot(AADSPSection section, AADSPEffect* effect) {
-			if (effect == nullptr) return -2;
+			if (effect == nullptr) return -1;
 			int sectionInt = GetSection(section);
 
 			if (!(effect->GetDSPSection() & section)) {

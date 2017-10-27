@@ -156,9 +156,7 @@ namespace AlternativeAudio {
 		this->m_path = path;
 		this->reloadSource();
 	}
-	AZStd::string AudioSourceComponent::GetPath() {
-		return this->m_path;
-	}
+	AZStd::string AudioSourceComponent::GetPath() { return this->m_path; }
 
 	void AudioSourceComponent::SetLibraryCrc(AZ::Crc32 lib) {
 		this->m_libCrc = lib;
@@ -167,31 +165,12 @@ namespace AlternativeAudio {
 	void AudioSourceComponent::SetLibrary(AZStd::string lib) {
 		this->m_lib = lib;
 		this->m_libCrc = AZ::Crc32(lib.c_str());
-
-		//reload source if activated
-		if (this->BusIsConnectedId(this->GetEntityId())) {
-			if (this->m_pSrc) {
-				this->m_pSrc->Release();
-				this->m_pSrc = nullptr;
-			}
-
-			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
-			this->m_pSrc->AddRef();
-
-			//notify dsp effects that there is a new source
-			EBUS_EVENT_ID(this->GetEntityId(), DSPEffectComponentNotificationBus, SourceReloaded);
-		}
+		this->reloadSource();
 	}
-	AZ::Crc32 AudioSourceComponent::GetLibraryCrc() {
-		return this->m_libCrc;
-	}
-	AZStd::string AudioSourceComponent::GetLibrary() {
-		return this->m_lib;
-	}
+	AZ::Crc32 AudioSourceComponent::GetLibraryCrc() { return this->m_libCrc; }
+	AZStd::string AudioSourceComponent::GetLibrary() { return this->m_lib; }
 
-	IAudioSource* AudioSourceComponent::GetSource() {
-		return this->m_pSrc;
-	}
+	IAudioSource* AudioSourceComponent::GetSource() { return this->m_pSrc; }
 
 	void AudioSourceComponent::SetDevice(OAudioDevice* device) {
 		if (this->m_pDevice && this->m_srcID != (unsigned long long)(-1)) {

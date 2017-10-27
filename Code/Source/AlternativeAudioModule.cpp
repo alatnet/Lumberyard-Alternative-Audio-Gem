@@ -6,6 +6,7 @@
 
 #include "Components\AudioSourceComponent.h"
 #include "Components\DSPEffectComponent.h"
+#include "Components\DSP\VolumeDSPComponent.h"
 
 #include <IGem.h>
 
@@ -21,10 +22,11 @@ namespace AlternativeAudio
             : CryHooksModule()
         {
             // Push results of [MyComponent]::CreateDescriptor() into m_descriptors here.
-            m_descriptors.insert(m_descriptors.end(), {
-                AlternativeAudioSystemComponent::CreateDescriptor(),
+			m_descriptors.insert(m_descriptors.end(), {
+				AlternativeAudioSystemComponent::CreateDescriptor(),
 				AudioSourceComponent::CreateDescriptor(),
 				DSPEffectComponent::CreateDescriptor(),
+				DSP::VolumeDSPComponent::CreateDescriptor(),
             });
         }
 

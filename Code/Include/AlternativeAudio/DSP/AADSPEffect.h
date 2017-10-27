@@ -59,12 +59,10 @@ namespace AlternativeAudio {
 		eDPT_Frame //single frame //allows for stacking dsp processing calls and multi-threading
 	};
 
-	//effect itself
+	//effect returned by alternative audio
 	class AADSPEffect : public AAErrorHandler, public AASmartRef {
 	public:
 		AZ_RTTI(AADSPEffect, "{056BD074-4330-42DB-A073-824EE637BD94}", AAErrorHandler, AASmartRef);
-	public:
-		//AADSPEffect(void* userdata) {}
 	public:
 		virtual AZStd::string GetName() = 0;
 	public:
@@ -75,12 +73,9 @@ namespace AlternativeAudio {
 	public:
 		virtual int GetDSPSection() = 0;
 		virtual AADSPProcessType GetProcessType() = 0;
-	/*public:
-		bool HasError() { return AAErrorHandler::HasError(); }
-		AAError GetError() { return AAErrorHandler::GetError(); }*/
-	/*public:
-		void AddRef() { _i_reference_target_t::AddRef(); }
-		void Release() { _i_reference_target_t::Release(); }*/
+	public:
+		virtual operator AADSPEffect*() { return this; }
+		virtual AADSPEffect* get() { return this; }
 	public:
 		static void Reflect(AZ::SerializeContext* serialize) {
 			serialize->Class<AADSPEffect, AAErrorHandler, AASmartRef>()
@@ -94,10 +89,7 @@ namespace AlternativeAudio {
 				->Method("GetName", &AADSPEffect::GetName)
 				->Method("GetDSPSection", &AADSPEffect::GetDSPSection)
 				->Method("GetProcessType", &AADSPEffect::GetProcessType)
-				//->Method("AddRef", &AADSPEffect::AddRef)
-				//->Method("Release", &AADSPEffect::Release)
-				/*->Method("HasError", &AADSPEffect::HasError)
-				->Method("GetError", &AADSPEffect::GetError)*/;
+				->Method("get", &AADSPEffect::get);
 		}
 	};
 }

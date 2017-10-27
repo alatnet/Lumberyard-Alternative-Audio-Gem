@@ -25,11 +25,15 @@ namespace AlternativeAudio {
 	protected:
 		////////////////////////////////////////////////////////////////////////
 		// DSPEffectComponentBus interface implementation
-		void SetDSPEffectCrc(AZ::Crc32 dsp);
-		void SetDSPEffect(AZStd::string dsp);
+		void SetDSPEffectCrc(AZ::Crc32 dsp, void* userdata);
+		void SetDSPEffect(AZStd::string dsp, void* userdata);
 		AADSPEffect* GetDSPEffect();
 		AZ::Crc32 GetDSPEffectCrc();
 		AZStd::string GetDSPEffectName();
+		void SetShared(bool shared);
+		void SetSharedTag(AZStd::string tag);
+		bool GetShared();
+		AZStd::string GetSharedTag();
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////
@@ -48,10 +52,15 @@ namespace AlternativeAudio {
 		AZ::Crc32 m_DSPCrc;
 		AZStd::string m_DSPlib;
 		unsigned long long m_DSPSlot;
+		void * m_pDSPUserdata;
+
+		bool m_shared;
+		AZStd::string m_tag;
 
 		bool m_checkButton;
 	private:
 		void CheckCrc();
 		void reloadDSP();
+		bool SharedVisibility() { return this->m_shared; }
 	};
 }
