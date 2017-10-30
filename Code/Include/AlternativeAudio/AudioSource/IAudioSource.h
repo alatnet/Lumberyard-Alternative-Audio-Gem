@@ -4,7 +4,7 @@
 #include <AzCore/RTTI/BehaviorContext.h>
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\AAErrorHandler.h>
-#include <AlternativeAudio\AAFlagHandler.h>
+#include <AlternativeAudio\AAAttributeHandler.h>
 #include <AlternativeAudio\AAAudioFrame.h>
 #include <AlternativeAudio\DSP\AADSPEffect.h>
 #include <AlternativeAudio\DSP\AADSPEffectHandler.h>
@@ -16,11 +16,11 @@ namespace AlternativeAudio {
 	//input source
 	class IAudioSourceLib
 		: public AAErrorHandlerLib
-		, public AAFlagHandler
+		, public AAAttributeHandler
 		, public AASmartRef
 	{
 	public:
-		AZ_RTTI(IAudioSourceLib, "{FC787633-E346-4547-9A30-311C2E5767AF}", AAErrorHandlerLib, AAFlagHandler, AASmartRef);
+		AZ_RTTI(IAudioSourceLib, "{FC787633-E346-4547-9A30-311C2E5767AF}", AAErrorHandlerLib, AAAttributeHandler, AASmartRef);
 	public:
 		//seek to a position on the audio source (in frames)
 		virtual bool Seek(long long position) = 0;
@@ -58,12 +58,12 @@ namespace AlternativeAudio {
 	//input source
 	class IAudioSource
 		: public AAErrorHandler
-		, public AAFlagHandler
+		, public AAAttributeHandler
 		, public AADSPEffectHandler
 		, public AASmartRef
 	{
 	public:
-		AZ_RTTI(IAudioSource, "{FA8714F6-E26F-4420-9230-F46F84A99320}", AAErrorHandler, AAFlagHandler, AADSPEffectHandler, AASmartRef);
+		AZ_RTTI(IAudioSource, "{FA8714F6-E26F-4420-9230-F46F84A99320}", AAErrorHandler, AAAttributeHandler, AADSPEffectHandler, AASmartRef);
 	public:
 		virtual bool Seek(long long position) = 0;
 		virtual long long GetFrames(long long framesToRead, float* buff) = 0;
@@ -74,7 +74,7 @@ namespace AlternativeAudio {
 		virtual long long GetFrameLength() = 0;
 	public:
 			static void Reflect(AZ::SerializeContext* serialize) {
-				serialize->Class<IAudioSource, AAErrorHandler, AAFlagHandler, AADSPEffectHandler>()
+				serialize->Class<IAudioSource, AAErrorHandler, AADSPEffectHandler>()
 					->Version(0)
 					->SerializerForEmptyClass();
 			}

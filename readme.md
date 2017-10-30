@@ -3,7 +3,7 @@ An Amazon Lumberyard Gem that adds in an alternative audio system.
 
 ## Requirements
 Usage of the gem requires that you have a companion audio library gem and audio playback gem.  
-You can optinally add in a DSP library gem to apply DSP effects to either an audio source or playback.
+You can optionally add in a DSP library gem to apply DSP effects to either an audio source or playback.
 
 ## C++ Usage Example
 ```C++
@@ -48,7 +48,8 @@ void MusicInit(){
     //global master volume dsp effect setup
     EBUS_EVENT(
         AlternativeAudio::AlternativeAudioDSPBus,
-        AddEffect,
+        AddSharedEffect,
+        "master", //tag name for the shared effect
         AlternativeAudio::AADSPSection::eDS_Output, //where to set the dsp
         AZ_CRC("AAVolumeControl", 0x722dd2a9), //which dsp effect to use
         nullptr, //dsp userdata
@@ -119,7 +120,7 @@ int main(){
 
     //set volume to 50% on the source
     EBUS_EVENT_ID(
-        sourceVolume,
+        sourceVolume->get(),
         AlternativeAudio::DSP::VolumeDSPBus,
         SetVol,
         0.5f //(range from 0.0f to 1.0f)
@@ -145,12 +146,13 @@ int main(){
         );
     }
 
-    delete source; //delete the audio source
+    source->Release(); //delete the audio source
     sourceVolume->Release(); //free up the source volume dsp effect.
 
     MusicShutdown();
 }
 ```
+**Note:** If you are using an ebus for shared dsp effects, call the "get" function to get the root dsp effect that is shared.
 
 ## Lua Usage Example
 ```Lua
@@ -172,7 +174,8 @@ function Example:MusicInit()
     AlternativeAudioDeviceBus.Broadcast.SetMasterDevice(self.device)
 
     --global master volume dsp effect setup
-    AlternativeAudioDSPBus.Broadcast.AddEffect(
+    AlternativeAudioDSPBus.Broadcast.AddSharedEffect(
+        "master" --tag name for the shared effect
         AADSPSection.Output, --where to set the dsp effect
         Crc32("AAVolumeControl"), --which dsp effect to use
         nil, --dsp userdata
@@ -206,7 +209,7 @@ function Example:OnActivate()
     self.source.AddEffectFreeSlot(self.sourceVolume)
 
     --set volume to 50% on the source
-    AAVolumeDSPBus.Event.SetVol(self.sourceVolume, 0.5)
+    AAVolumeDSPBus.Event.SetVol(self.sourceVolume.get(), 0.5)
 
     self.sourceID = AlternativeAudioDeviceBus.Broadcast.PlaySource(self.source)
 end
@@ -222,6 +225,7 @@ end
 
 return Example
 ```
+**Note:** If you are using an ebus for shared dsp effects, call the "get" function to get the root dsp effect that is shared.
 
 ## Creating an Audio Playback Gem
 Example Playback Gem: [Alternative Audio - Port Audio Lumberyard Gem](https://github.com/alatnet/Lumberyard-Alternative-Audio-Port-Audio-Gem)  

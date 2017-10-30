@@ -7,8 +7,6 @@
 
 namespace AlternativeAudio {
 	namespace Components {
-		//const char * AudioSourceComponentUUID = "{57C8594B-0D13-4555-AED1-769D59A55A09}";
-
 		class AudioSourceComponentEvents
 			: public AZ::ComponentBus
 		{
@@ -25,6 +23,8 @@ namespace AlternativeAudio {
 			virtual void SetPath(AZStd::string path) = 0;
 			virtual AZStd::string GetPath() = 0;
 
+			virtual void SetLooping(bool looping) = 0;
+			virtual bool IsLooping() = 0;
 
 			virtual void SetLibraryCrc(AZ::Crc32 lib) = 0;
 			virtual AZ::Crc32 GetLibraryCrc() = 0;

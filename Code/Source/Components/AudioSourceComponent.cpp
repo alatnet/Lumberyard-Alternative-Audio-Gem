@@ -9,8 +9,7 @@
 #include <AlternativeAudio\AlternativeAudioBus.h>
 
 #include <AlternativeAudio\Components\DSPEffectComponentBus.h>
-
-using namespace AlternativeAudio::Components;
+#include <AlternativeAudio\AAAttributeTypes.h>
 
 namespace AlternativeAudio {
 	AudioSourceComponent::AudioSourceComponent() {
@@ -20,6 +19,7 @@ namespace AlternativeAudio {
 		this->m_path = "";
 		this->m_lib = "";
 		this->m_libCrc = -1;
+		this->m_loop = false;
 	}
 
 	AudioSourceComponent::~AudioSourceComponent() {
@@ -33,6 +33,7 @@ namespace AlternativeAudio {
 				->Field("lib", &AudioSourceComponent::m_lib)
 				->Field("libCrc", &AudioSourceComponent::m_libCrc)
 				->Field("path", &AudioSourceComponent::m_path)
+				->Field("loop", &AudioSourceComponent::m_loop)
 				->Field("voidCheckButton", &AudioSourceComponent::m_checkButton);
 
 			//edit context
@@ -48,12 +49,12 @@ namespace AlternativeAudio {
 					;
 
 				editInfo->DataElement(0, &AudioSourceComponent::m_path, "Path", "Audio file path.");
+				editInfo->DataElement(AZ::Edit::UIHandlers::CheckBox, &AudioSourceComponent::m_loop, "Loop", "");
 
 				editInfo->ClassElement(AZ::Edit::ClassElements::Group, "Audio Library")
 					->Attribute(AZ::Edit::Attributes::AutoExpand, true)
 					->DataElement(0, &AudioSourceComponent::m_lib, "Library", "Library name to use.")
-					//->DataElement(AZ::Edit::UIHandlers::Crc, &AudioSourceComponent::m_libCrc, "Library Crc", "Library CRC to use.")
-					->DataElement(AZ::Edit::UIHandlers::Button, &AudioSourceComponent::m_checkButton, "Check", "Check to see if the library is valid.")
+					->DataElement(AZ::Edit::UIHandlers::Button, &AudioSourceComponent::m_checkButton, "Check Library", "Check to see if the library is valid.")
 						->Attribute(AZ::Edit::Attributes::ChangeNotify, &AudioSourceComponent::CheckCrc)
 						->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::EntireTree);
 			}
@@ -74,6 +75,8 @@ namespace AlternativeAudio {
 				EBUS_METHOD(GetTime)
 				EBUS_METHOD(SetPath)
 				EBUS_METHOD(GetPath)
+				EBUS_METHOD(SetLooping)
+				EBUS_METHOD(IsLooping)
 				EBUS_METHOD(SetLibraryCrc)
 				EBUS_METHOD(GetLibraryCrc)
 				EBUS_METHOD(SetLibrary)
@@ -139,7 +142,6 @@ namespace AlternativeAudio {
 	}
 	AudioSourceTime AudioSourceComponent::GetTime(){
 		if (this->m_srcID == (unsigned long long)(-1)) return AudioSourceTime();
-
 		if (this->m_pDevice) return this->m_pDevice->GetTime(this->m_srcID);
 
 		AudioSourceTime ret;
@@ -157,6 +159,20 @@ namespace AlternativeAudio {
 		this->reloadSource();
 	}
 	AZStd::string AudioSourceComponent::GetPath() { return this->m_path; }
+	
+	void AudioSourceComponent::SetLooping(bool looping) {
+		this->m_loop = looping;
+		
+		if (this->m_pSrc)
+			this->m_pSrc->setAttr(Attributes::Source::Loop, looping);
+
+		if (this->m_srcID != (unsigned long long)(-1)) {
+			auto attr = AAAttributeHandler::CreateAttribute(looping);
+			if (this->m_pDevice) this->m_pDevice->UpdateAttribute(this->m_srcID, Attributes::Source::Loop, attr);
+			else EBUS_EVENT(AlternativeAudioDeviceBus, UpdateAttribute, this->m_srcID, Attributes::Source::Loop, attr);
+		}
+	}
+	bool AudioSourceComponent::IsLooping() { return this->m_loop; }
 
 	void AudioSourceComponent::SetLibraryCrc(AZ::Crc32 lib) {
 		this->m_libCrc = lib;
@@ -173,11 +189,7 @@ namespace AlternativeAudio {
 	IAudioSource* AudioSourceComponent::GetSource() { return this->m_pSrc; }
 
 	void AudioSourceComponent::SetDevice(OAudioDevice* device) {
-		if (this->m_pDevice && this->m_srcID != (unsigned long long)(-1)) {
-			this->m_pDevice->StopSource(this->m_srcID);
-			this->m_srcID = -1;
-		}
-
+		if (this->IsPlaying()) this->Stop();
 		this->m_pDevice = device;
 	}
 	////////////////////////////////////////////////////////////////////////
@@ -189,8 +201,18 @@ namespace AlternativeAudio {
 
 	void AudioSourceComponent::Activate() {
 		//load audio source
-		EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
-		this->m_pSrc->AddRef();
+		//if (gEnv->pFileIO->Exists(this->m_path.c_str())) {
+			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
+			if (this->m_pSrc) {
+				this->m_pSrc->AddRef();
+				this->m_pSrc->Attribute(Attributes::Source::Loop, this->m_loop);
+			} else {
+				//error notify (could not create source)
+				AZ_Printf("[Alternative Audio]", "[Alternative Audio](AudioSourceComponent){%l} Could not load \"%s\".", this->GetEntityId(), this->m_path.c_str());
+			}
+		//} else {
+		//	//error notify (path doesnt exist)
+		//}
 
 		this->BusConnect(this->GetEntityId());
 	}
@@ -201,8 +223,10 @@ namespace AlternativeAudio {
 		if (this->IsPlaying()) this->Stop();
 
 		//release audio source
-		this->m_pSrc->Release();
-		this->m_pSrc = nullptr;
+		if (this->m_pSrc) {
+			this->m_pSrc->Release();
+			this->m_pSrc = nullptr;
+		}
 	}
 	////////////////////////////////////////////////////////////////////////
 
@@ -218,14 +242,6 @@ namespace AlternativeAudio {
 				}
 			}
 		}
-		//} else { //check crc
-		//	for (AZStd::pair<AZStd::string, AZ::Crc32> pairs : crclist) {
-		//		if (pairs.second == this->m_libCrc) {
-		//			this->m_lib = pairs.second;
-		//			return;
-		//		}
-		//	}
-		//}
 		this->m_lib = "Invalid";
 		this->m_libCrc = -1;
 	}
@@ -240,8 +256,19 @@ namespace AlternativeAudio {
 				this->m_pSrc = nullptr;
 			}
 
-			EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
-			this->m_pSrc->AddRef();
+			//if (gEnv->pFileIO->Exists(this->m_path.c_str())) {
+				EBUS_EVENT_RESULT(this->m_pSrc, AlternativeAudioSourceBus, NewAudioSource, this->m_libCrc, this->m_path, nullptr);
+				if (this->m_pSrc) {
+					this->m_pSrc->AddRef();
+					this->m_pSrc->Attribute(Attributes::Source::Loop, this->m_loop);
+				}
+				else {
+					//error notify (could not create source)
+					AZ_Printf("[Alternative Audio]", "[Alternative Audio](AudioSourceComponent){%l} Could not load \"%s\".", this->GetEntityId(), this->m_path.c_str());
+				}
+			//} else {
+			//	//error notify (path doesnt exist)
+			//}
 
 			//notify dsp effects that there is a new source
 			EBUS_EVENT_ID(this->GetEntityId(), DSPEffectComponentNotificationBus, SourceReloaded);

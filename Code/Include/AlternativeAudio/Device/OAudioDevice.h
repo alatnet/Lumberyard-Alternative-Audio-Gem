@@ -89,7 +89,10 @@ namespace AlternativeAudio {
 		virtual bool IsPlaying(unsigned long long id) = 0;
 		virtual AudioSourceTime GetTime(unsigned long long id) = 0;
 		virtual void SetTime(unsigned long long id, double time) = 0;
-		//used to control ALL sound source playback.
+	public: //attribute control for running audio sources
+		virtual void UpdateAttribute(unsigned long long id, AZ::Crc32 idCrc, AAAttribute* attr) = 0;
+		virtual void ClearAttribute(unsigned long long id, AZ::Crc32 idCrc) = 0;
+	public: //used to control ALL sound source playback.
 		virtual void PauseAll() {};
 		virtual void ResumeAll() {};
 		virtual void StopAll() {};
@@ -98,7 +101,7 @@ namespace AlternativeAudio {
 	public:
 		virtual void SetMaster(bool onoff) = 0; //mainly for when assigning a device as a master device
 	protected:
-		AAFlagHandler m_flags;
+		AAAttributeHandler m_attributes;
 	public:
 		static void Reflect(AZ::SerializeContext* serialize) {
 			serialize->Class<OAudioDevice, AADSPDeviceEffectHandler, AASmartRef, AAErrorHandler>()

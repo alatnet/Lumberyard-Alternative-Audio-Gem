@@ -3,6 +3,9 @@
 #include <AzCore/Component/Component.h>
 
 #include <AlternativeAudio\Components\AudioSourceComponentBus.h>
+#include <AlternativeAudio\Components\AAComponentTypes.h>
+
+using namespace AlternativeAudio::Components;
 
 namespace AlternativeAudio {
 	class AudioSourceComponent
@@ -13,7 +16,8 @@ namespace AlternativeAudio {
 		AudioSourceComponent();
 		~AudioSourceComponent();
 	public:
-		AZ_COMPONENT(AudioSourceComponent, "{57C8594B-0D13-4555-AED1-769D59A55A09}");
+		//AZ_COMPONENT(AudioSourceComponent, "{57C8594B-0D13-4555-AED1-769D59A55A09}");
+		AZ_COMPONENT(AudioSourceComponent, AudioSourceComponentUUID, AZ::Component);
 
 		static void Reflect(AZ::ReflectContext* context);
 
@@ -36,6 +40,9 @@ namespace AlternativeAudio {
 
 		void SetPath(AZStd::string path);
 		AZStd::string GetPath();
+
+		void SetLooping(bool looping);
+		bool IsLooping();
 
 		void SetLibraryCrc(AZ::Crc32 lib);
 		AZ::Crc32 GetLibraryCrc();
@@ -63,6 +70,7 @@ namespace AlternativeAudio {
 		unsigned long long m_srcID;
 
 		bool m_checkButton;
+		bool m_loop;
 	private:
 		void CheckCrc();
 		void reloadSource();

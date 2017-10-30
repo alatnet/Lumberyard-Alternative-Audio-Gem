@@ -9,8 +9,6 @@
 #include <AlternativeAudio\Components\AudioSourceComponentBus.h>
 #include <AlternativeAudio\AlternativeAudioBus.h>
 
-using namespace AlternativeAudio::Components;
-
 namespace AlternativeAudio {
 	DSPEffectComponent::DSPEffectComponent() {
 		this->m_pDSP = nullptr;
@@ -20,6 +18,8 @@ namespace AlternativeAudio {
 		this->m_tag = "";
 		this->m_shared = false;
 		this->m_pDSPUserdata = nullptr;
+		this->m_customSlot = false;
+		this->m_slot = -1;
 	}
 
 	DSPEffectComponent::~DSPEffectComponent() {
@@ -34,6 +34,8 @@ namespace AlternativeAudio {
 				->Field("crc", &DSPEffectComponent::m_DSPCrc)
 				->Field("shared", &DSPEffectComponent::m_shared)
 				->Field("tag", &DSPEffectComponent::m_tag)
+				->Field("customSlot", &DSPEffectComponent::m_customSlot)
+				->Field("slot", &DSPEffectComponent::m_slot)
 				->Field("voidCheckButton", &DSPEffectComponent::m_checkButton);
 
 			//edit context
@@ -48,22 +50,33 @@ namespace AlternativeAudio {
 					;
 
 				editInfo->DataElement(0, &DSPEffectComponent::m_DSPlib, "Effect", "The DSP Effect to use.");
-				//editInfo->DataElement(AZ::Edit::UIHandlers::Crc, &DSPEffectComponent::m_DSPCrc, "Effect Crc", "The DSP Crc.");
 
-				editInfo->DataElement(AZ::Edit::UIHandlers::Button, &DSPEffectComponent::m_checkButton, "Check", "Check to see if the library is valid.")
+				editInfo->DataElement(AZ::Edit::UIHandlers::Button, &DSPEffectComponent::m_checkButton, "Check Library", "Check to see if the library is valid.")
 					->Attribute(AZ::Edit::Attributes::ChangeNotify, &DSPEffectComponent::CheckCrc)
-					->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::EntireTree);
+					->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::EntireTree)
+					;
 
 				editInfo->ClassElement(AZ::Edit::ClassElements::Group, "Shared")
 					->Attribute(AZ::Edit::Attributes::AutoExpand, true)
 					->DataElement(AZ::Edit::UIHandlers::CheckBox, &DSPEffectComponent::m_shared, "Shared", "Use a shared DSP Effect.")
-					->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::EntireTree)
+						->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::EntireTree)
 					->DataElement(0, &DSPEffectComponent::m_tag, "Tag", "The tag of the shared DSP Effect.\nWill create the DSP Effect if there is no DSP Effect associated with the tag.")
-					->Attribute(AZ::Edit::Attributes::Visibility, &DSPEffectComponent::SharedVisibility);
+						->Attribute(AZ::Edit::Attributes::Visibility, &DSPEffectComponent::SharedVisibility)
+					;
+
+				editInfo->ClassElement(AZ::Edit::ClassElements::Group, "Custom Slot")
+					->Attribute(AZ::Edit::Attributes::AutoExpand, true)
+					->DataElement(AZ::Edit::UIHandlers::CheckBox, &DSPEffectComponent::m_customSlot, "Use Slot", " ")
+						->Attribute(AZ::Edit::Attributes::ChangeNotify, &DSPEffectComponent::resetCustomSlot)
+						->Attribute(AZ::Edit::Attributes::ChangeNotify, AZ::Edit::PropertyRefreshLevels::EntireTree)
+					->DataElement(AZ::Edit::UIHandlers::SpinBox, &DSPEffectComponent::m_slot, "Slot", "")
+						->Attribute(AZ::Edit::Attributes::Visibility, &DSPEffectComponent::CustomSlotVisibilty)
+						->Attribute(AZ::Edit::Attributes::Min, -1);
 			}
 		}
 
-		/*AZ::BehaviorContext* behaviorContext = azrtti_cast<AZ::BehaviorContext*>(context);
+	#ifdef ENABLE_COMPONENT_SCRIPT_BUS
+		AZ::BehaviorContext* behaviorContext = azrtti_cast<AZ::BehaviorContext*>(context);
 		if (behaviorContext) {
 			#define EBUS_METHOD(name) ->Event(#name, &Components::DSPEffectComponentBus::Events::##name##)
 			behaviorContext->EBus<Components::DSPEffectComponentBus>("AADSPEffectComponentBus")
@@ -75,7 +88,18 @@ namespace AlternativeAudio {
 				EBUS_METHOD(GetDSPEffectName)
 				;
 			#undef EBUS_METHOD
-		}*/
+
+		#define EBUS_METHOD(name) ->Event(#name, &Components::DSPEffectCustomSlotComponentBus::Events::##name##)
+			behaviorContext->EBus<Components::DSPEffectCustomSlotComponentBus>("AADSPEffectCustomSlotComponentBus")
+				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
+				EBUS_METHOD(UseCustomSlot)
+				EBUS_METHOD(IsUsingCustomSlot)
+				EBUS_METHOD(SetSlot)
+				EBUS_METHOD(GetSlot)
+				;
+		#undef EBUS_METHOD
+		}
+	#endif
 	}
 
 	void DSPEffectComponent::GetProvidedServices(AZ::ComponentDescriptor::DependencyArrayType& provided) {
@@ -124,6 +148,18 @@ namespace AlternativeAudio {
 	////////////////////////////////////////////////////////////////////////
 
 	////////////////////////////////////////////////////////////////////////
+	// DSPEffectCustomSlotComponentBus interface implementation
+	void DSPEffectComponent::UseCustomSlot(bool x) { this->m_customSlot = x; }
+	bool DSPEffectComponent::IsUsingCustomSlot() { return this->m_customSlot; }
+	void DSPEffectComponent::SetSlot(unsigned long long slot) {
+		if (!this->m_customSlot) return;
+		this->m_slot = slot;
+		this->reloadDSP();
+	}
+	unsigned long long DSPEffectComponent::GetSlot() { return this->m_DSPSlot; }
+	////////////////////////////////////////////////////////////////////////
+
+	////////////////////////////////////////////////////////////////////////
 	// DSPEffectComponentNotificationBus interface implementation
 	void DSPEffectComponent::SourceReloaded() {
 		if (!this->m_pDSP) return;
@@ -132,10 +168,25 @@ namespace AlternativeAudio {
 		IAudioSource * source;
 		EBUS_EVENT_ID_RESULT(source, this->GetEntityId(), AudioSourceComponentBus, GetSource);
 
-		if (this->m_DSPSlot != (unsigned long long)(-1)) { //if we have a dsp slot number
-			source->AddEffect(this->m_pDSP,this->m_DSPSlot); //add it to that slot
-		}else{ //otherwise
-			this->m_DSPSlot = source->AddEffectFreeSlot(this->m_pDSP); //add it to a free slot
+		if (source) {
+			if (this->m_DSPSlot != (unsigned long long)(-1)) { //if we have a dsp slot number
+				source->AddEffect(this->m_pDSP, this->m_DSPSlot); //add it to that slot
+			} else { //otherwise
+				if (this->m_customSlot) { //if we are using a custom slot
+					if (source->AddEffect(this->m_pDSP, this->m_slot)) //add it to that slot
+						this->m_DSPSlot = this->m_slot;
+					else {
+						this->m_DSPSlot = -1;
+						//error notify? (cannot use slot)
+						AZ_Printf("[Alternative Audio]", "[Alternative Audio](DSPEffectComponent){%l} Could not assign dsp \"%l\" to slot \"%l\".", this->GetEntityId(), this->m_DSPCrc, this->m_slot);
+					}
+				} else { //otherwise
+					this->m_DSPSlot = source->AddEffectFreeSlot(this->m_pDSP); //add it to a free slot
+				}
+			}
+		} else {
+			//error notify? (no source)
+			AZ_Printf("[Alternative Audio]", "[Alternative Audio](DSPEffectComponent){%l} No source attached to entity.", this->GetEntityId());
 		}
 	}
 	////////////////////////////////////////////////////////////////////////
@@ -152,17 +203,23 @@ namespace AlternativeAudio {
 		} else {
 			EBUS_EVENT_RESULT(this->m_pDSP, AlternativeAudioDSPBus, NewDSPEffect, this->m_DSPCrc, this->m_pDSPUserdata);
 		}
-		this->m_pDSP->AddRef();
+		if (this->m_pDSP) this->m_pDSP->AddRef();
+		else {
+			//error notify
+			AZ_Printf("[Alternative Audio]", "[Alternative Audio](DSPEffectComponent){%l} Could not load dsp \"%l\".", this->GetEntityId(), this->m_DSPCrc);
+		}
 
 		this->SourceReloaded();
 
 		DSPEffectComponentBus::Handler::BusConnect(AZ::EntityComponentIdPair(this->GetEntityId(), this->GetId()));
 		DSPEffectComponentNotificationBus::Handler::BusConnect(this->GetEntityId());
+		DSPEffectCustomSlotComponentBus::Handler::BusConnect(AZ::EntityComponentIdPair(this->GetEntityId(), this->GetId()));
 	}
 
 	void DSPEffectComponent::Deactivate() {
 		DSPEffectComponentBus::Handler::BusDisconnect();
 		DSPEffectComponentNotificationBus::Handler::BusDisconnect();
+		DSPEffectCustomSlotComponentBus::Handler::BusDisconnect();
 
 		//release dsp effect
 		if (this->m_pDSP) {
@@ -185,14 +242,6 @@ namespace AlternativeAudio {
 				}
 			}
 		}
-		//else { //check crc
-		//	for (AZStd::pair<AZStd::string, AZ::Crc32> pairs : crclist) {
-		//		if (pairs.second == this->m_DSPCrc) {
-		//			this->m_DSPlib = pairs.second;
-		//			return;
-		//		}
-		//	}
-		//}
 		this->m_DSPlib = "Invalid";
 		this->m_DSPCrc = -1;
 	}
@@ -204,28 +253,52 @@ namespace AlternativeAudio {
 			IAudioSource * source;
 			EBUS_EVENT_ID_RESULT(source, this->GetEntityId(), AudioSourceComponentBus, GetSource);
 
-			//if we have a dsp slot number
-			if (this->m_DSPSlot != (unsigned long long)(-1)) {
-				source->RemoveEffect(this->m_DSPSlot); //remove the dsp effect from the source
+			if (source) {
+				//if we have a dsp slot number
+				if (this->m_DSPSlot != (unsigned long long)(-1)) {
+					source->RemoveEffect(this->m_DSPSlot); //remove the dsp effect from the source
 
-				//release the dsp effect
-				if (this->m_pDSP) {
-					this->m_pDSP->Release();
-					this->m_pDSP = nullptr;
-					this->m_DSPSlot = -1;
+					//release the dsp effect
+					if (this->m_pDSP) {
+						this->m_pDSP->Release();
+						this->m_pDSP = nullptr;
+					}
+
+					//create a new dsp effect
+					if (this->m_shared) {
+						EBUS_EVENT_RESULT(this->m_pDSP, AlternativeAudioDSPBus, GetSharedDSPEffect, this->m_tag, this->m_DSPCrc, this->m_pDSPUserdata);
+					} else {
+						EBUS_EVENT_RESULT(this->m_pDSP, AlternativeAudioDSPBus, NewDSPEffect, this->m_DSPCrc, this->m_pDSPUserdata);
+					}
+
+					if (this->m_pDSP) {
+						this->m_pDSP->AddRef();
+
+						//add the new dsp effect to the same slot of the previous one
+						if (this->m_customSlot) { //if we are using a custom slot
+							if (source->AddEffect(this->m_pDSP, this->m_slot)) //add it to that slot
+								this->m_DSPSlot = this->m_slot;
+							else {
+								this->m_DSPSlot = -1;
+								//error notify? (cannot use slot)
+								AZ_Printf("[Alternative Audio]", "[Alternative Audio](DSPEffectComponent){%l} Could not assign dsp \"%l\" to slot \"%l\".", this->GetEntityId(), this->m_DSPCrc, this->m_slot);
+							}
+						} else { //otherwise
+							this->m_DSPSlot = source->AddEffectFreeSlot(this->m_pDSP);
+						}
+					} else {
+						//error notify (dsp not created)
+						AZ_Printf("[Alternative Audio]", "[Alternative Audio](DSPEffectComponent){%l} Could not load dsp \"%l\".", this->GetEntityId(), this->m_DSPCrc);
+					}
 				}
-
-				//create a new dsp effect
-				if (this->m_shared) {
-					EBUS_EVENT_RESULT(this->m_pDSP, AlternativeAudioDSPBus, GetSharedDSPEffect, this->m_tag, this->m_DSPCrc, this->m_pDSPUserdata);
-				} else {
-					EBUS_EVENT_RESULT(this->m_pDSP, AlternativeAudioDSPBus, NewDSPEffect, this->m_DSPCrc, this->m_pDSPUserdata);
-				}
-				this->m_pDSP->AddRef();
-
-				//add the new dsp effect to the same slot of the previous one
-				source->AddEffect(this->m_pDSP, this->m_DSPSlot);
+			} else {
+				//error notify? (no source)
+				AZ_Printf("[Alternative Audio]", "[Alternative Audio](DSPEffectComponent){%l} No source attached to entity.", this->GetEntityId());
 			}
 		}
+	}
+
+	void DSPEffectComponent::resetCustomSlot() {
+		if (!this->m_customSlot) this->m_slot = -1;
 	}
 }

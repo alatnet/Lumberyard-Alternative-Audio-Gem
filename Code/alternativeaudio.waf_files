@@ -11,8 +11,9 @@
       "Include/AlternativeAudio/AAErrorHandler.h",
       "Include/AlternativeAudio/AAAudioFrame.h",
       "Include/AlternativeAudio/AudioSourceAsset.h",
-      "Include/AlternativeAudio/AAFlagHandler.h",
-      "Include/AlternativeAudio/AASmartRef.h"
+      "Include/AlternativeAudio/AAAttributeHandler.h",
+      "Include/AlternativeAudio/AASmartRef.h",
+      "Include/AlternativeAudio/AAAttributeTypes.h"
     ],
     "Include/Audio Source": [
       "Include/AlternativeAudio/AudioSource/IAudioSource.h"
@@ -28,6 +29,7 @@
       "Include/AlternativeAudio/DSP/AADSPEffectHandler.h"
     ],
     "Include/Components": [
+      "Include/AlternativeAudio/Components/AAComponentTypes.h",
       "Include/AlternativeAudio/Components/AudioSourceComponentBus.h",
       "Include/AlternativeAudio/Components/DSPEffectComponentBus.h"
     ],

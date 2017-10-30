@@ -6,16 +6,9 @@
 
 namespace AlternativeAudio {
 	namespace Components {
-		//const char * DSPEffectComponentUUID = "{73803528-69F3-4017-BDE9-47E4CFD1AD6A}";
-
 		class DSPEffectComponentEvents
 			: public AZ::EntityComponentBus
-			//: public AZ::EBusTraits
 		{
-		/*public:
-			virtual ~DSPEffectComponentEvents() = default;
-			static const AZ::EBusAddressPolicy AddressPolicy = AZ::EBusAddressPolicy::ById;
-			typedef AZ::u32 BusIdType;*/
 		public:
 			virtual void SetDSPEffectCrc(AZ::Crc32 dsp, void* userdata) = 0;
 			virtual void SetDSPEffect(AZStd::string dsp, void* userdata) = 0;
@@ -30,6 +23,17 @@ namespace AlternativeAudio {
 		};
 
 		using DSPEffectComponentBus = AZ::EBus<DSPEffectComponentEvents>;
+
+		class DSPEffectCustomSlotComponentEvents
+			: public AZ::EntityComponentBus {
+		public:
+			virtual void UseCustomSlot(bool x) = 0;
+			virtual bool IsUsingCustomSlot() = 0;
+			virtual void SetSlot(unsigned long long slot) = 0;
+			virtual unsigned long long GetSlot() = 0;
+		};
+
+		using DSPEffectCustomSlotComponentBus = AZ::EBus<DSPEffectCustomSlotComponentEvents>;
 
 		class DSPEffectComponentNotifications
 			: public AZ::ComponentBus

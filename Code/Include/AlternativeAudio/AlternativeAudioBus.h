@@ -90,7 +90,7 @@ namespace AlternativeAudio {
 		virtual unsigned long long AddSharedEffectFreeSlot(AZStd::string tag, AADSPSection section, AZ::Crc32 crc, void* userdata) = 0;
 		virtual AADSPEffect * GetEffect(AADSPSection section, unsigned long long slot) = 0;
 		virtual bool RemoveEffect(AADSPSection section, unsigned long long slot) = 0;
-		virtual void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) = 0;
+		virtual void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAAttributeHandler * attr) = 0;
 		virtual AADSPDeviceEffectHandler* GetDSPDeviceEffectHandler() = 0;
 	};
 	using AlternativeAudioDSPBus = AZ::EBus<AlternativeAudioDSPRequests>;
@@ -125,6 +125,10 @@ namespace AlternativeAudio {
 		virtual bool IsPlaying(unsigned long long id) = 0;
 		virtual AudioSourceTime GetTime(unsigned long long id) = 0;
 		virtual void SetTime(unsigned long long id, double time) = 0;
+	public:
+		//attribute control for running audio sources
+		virtual void UpdateAttribute(unsigned long long id, AZ::Crc32 idCrc, AlternativeAudio::AAAttribute* attr) = 0;
+		virtual void ClearAttribute(unsigned long long id, AZ::Crc32 idCrc) = 0;
 	public:
 		//used to control ALL sound source playback.
 		virtual void PauseAll() = 0;

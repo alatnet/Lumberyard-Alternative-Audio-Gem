@@ -5,18 +5,25 @@
 #include <AlternativeAudio\Components\DSP\VolumeDSPComponentBus.h>
 #include <AlternativeAudio\Components\DSPEffectComponentBus.h>
 
+#include <AlternativeAudio\Components\AAComponentTypes.h>
+
+using namespace AlternativeAudio::Components;
+using namespace AlternativeAudio::Components::DSP;
+
 namespace AlternativeAudio {
 	namespace DSP {
 		class VolumeDSPComponent
 			: public AZ::Component
-			, public Components::DSP::VolumeComponentBus::Handler
-			, public Components::DSPEffectComponentNotificationBus::Handler
+			, public VolumeComponentBus::Handler
+			, public DSPEffectComponentNotificationBus::Handler
+			, public DSPEffectCustomSlotComponentBus::Handler
 		{
 		public:
 			VolumeDSPComponent();
 			~VolumeDSPComponent();
 		public:
-			AZ_COMPONENT(VolumeDSPComponent, "{73717A4F-CE6E-4917-811B-9350216F483E}");
+			//AZ_COMPONENT(VolumeDSPComponent, "{73717A4F-CE6E-4917-811B-9350216F483E}");
+			AZ_COMPONENT(VolumeDSPComponent, VolumeComponentUUID, AZ::Component);
 
 			static void Reflect(AZ::ReflectContext* context);
 
@@ -29,6 +36,14 @@ namespace AlternativeAudio {
 			// AudioSourceComponentBus interface implementation
 			void SetVol(float vol);
 			float GetVol();
+			////////////////////////////////////////////////////////////////////////
+		protected:
+			////////////////////////////////////////////////////////////////////////
+			// DSPEffectCustomSlotComponentBus interface implementation
+			void UseCustomSlot(bool x);
+			bool IsUsingCustomSlot();
+			void SetSlot(unsigned long long slot);
+			unsigned long long GetSlot();
 			////////////////////////////////////////////////////////////////////////
 		protected:
 			////////////////////////////////////////////////////////////////////////
@@ -48,8 +63,14 @@ namespace AlternativeAudio {
 			bool m_shared;
 			AZStd::string m_tag;
 			float m_vol;
+
+			long long m_slot;
+			bool m_customSlot;
 		private:
 			bool SharedVisibility() { return this->m_shared; }
+			bool CustomSlotVisibilty() { return this->m_customSlot; }
+			void resetCustomSlot();
+			void reloadDSP();
 		};
 	}
 }

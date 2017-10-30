@@ -1228,7 +1228,8 @@ namespace AlternativeAudio {
 			AASmartRef::Reflect(serialize);
 			AAError::Reflect(serialize);
 			AAErrorHandler::Reflect(serialize);
-			AAFlagHandler::Reflect(serialize);
+			//AAFlagHandler::Reflect(serialize);
+			AAAttributeHandler::Reflect(serialize);
 			AudioSourceTime::Reflect(serialize);
 			AADSPEffect::Reflect(serialize);
 			AADSPEffectHandler::Reflect(serialize);
@@ -1267,7 +1268,7 @@ namespace AlternativeAudio {
 				->Enum<AADSPProcessType::eDPT_Buffer>("Buffer")
 				->Enum<AADSPProcessType::eDPT_Frame>("Frame");
 			
-			#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("Reserved##id")
+			/*#define RESERVED_BIT(id) ->Enum<AASourceFlags::eAF_Reserved##id>("Reserved##id")
 			behaviorContext->Class<AASourceFlags>("AASourceFlags")
 				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
 				->Enum<AASourceFlags::eAF_Loop>("Loop")
@@ -1279,7 +1280,7 @@ namespace AlternativeAudio {
 				RESERVED_BIT(2)
 				RESERVED_BIT(3)
 				RESERVED_BIT(4);
-			#undef RESERVED_BIT
+			#undef RESERVED_BIT*/
 
 			behaviorContext->Class<AAResampleQuality>("AAResampleQuality")
 				->Attribute(AZ::Script::Attributes::Category, "Alternative Audio")
@@ -1317,7 +1318,7 @@ namespace AlternativeAudio {
 			AAError::Behavior(behaviorContext);
 			AAErrorHandler::Behavior(behaviorContext);
 
-			AAFlagHandler::Behavior(behaviorContext); //flag
+			//AAFlagHandler::Behavior(behaviorContext); //flag
 			IAudioSource::Behavior(behaviorContext); //audio source
 
 			//dsp effect
@@ -1828,6 +1829,12 @@ namespace AlternativeAudio {
 	}
 	void AlternativeAudioSystemComponent::Queue(bool startstop) {
 		IF_DEVICE->Queue(startstop);
+	}
+	void AlternativeAudioSystemComponent::UpdateAttribute(unsigned long long id, AZ::Crc32 idCrc, AlternativeAudio::AAAttribute* attr) {
+		IF_DEVICE->UpdateAttribute(id, idCrc, attr);
+	}
+	void AlternativeAudioSystemComponent::ClearAttribute(unsigned long long id, AZ::Crc32 idCrc) {
+		IF_DEVICE->ClearAttribute(id, idCrc);
 	}
 
 	#undef IF_DEVICE

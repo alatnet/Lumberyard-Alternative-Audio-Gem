@@ -5,7 +5,7 @@
 #include <AzCore/RTTI/TypeInfo.h>
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\AAErrorHandler.h>
-#include <AlternativeAudio\AAFlagHandler.h>
+#include <AlternativeAudio\AAAttributeHandler.h>
 #include <AlternativeAudio\AAAudioFrame.h>
 #include <AlternativeAudio\AASmartRef.h>
 #include <AzCore\std\string\string.h>
@@ -68,8 +68,8 @@ namespace AlternativeAudio {
 	public:
 		//can implement either or both.
 		//best to implement both and toggle GetProcessType based on platform features.
-		virtual void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags) {} //processes a range of frames (has a for loop)
-		virtual void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags) {} //processes a single frame (used in a for loop)
+		virtual void Process(AudioFrame::Type format, float * buffer, long long len, AAAttributeHandler * attr) {} //processes a range of frames (has a for loop)
+		virtual void ProcessFrame(AudioFrame::Type format, float * frame, AAAttributeHandler * attr) {} //processes a single frame (used in a for loop)
 	public:
 		virtual int GetDSPSection() = 0;
 		virtual AADSPProcessType GetProcessType() = 0;

@@ -3,18 +3,23 @@
 #include <AzCore/Component/Component.h>
 
 #include <AlternativeAudio\Components\DSPEffectComponentBus.h>
+#include <AlternativeAudio\Components\AAComponentTypes.h>
+
+using namespace AlternativeAudio::Components;
 
 namespace AlternativeAudio {
 	class DSPEffectComponent
 		: public AZ::Component
-		, public Components::DSPEffectComponentBus::Handler
-		, public Components::DSPEffectComponentNotificationBus::Handler
+		, public DSPEffectComponentBus::Handler
+		, public DSPEffectComponentNotificationBus::Handler
+		, public DSPEffectCustomSlotComponentBus::Handler
 	{
 	public:
 		DSPEffectComponent();
 		~DSPEffectComponent();
 	public:
-		AZ_COMPONENT(DSPEffectComponent, "{73803528-69F3-4017-BDE9-47E4CFD1AD6A}");
+		//AZ_COMPONENT(DSPEffectComponent, "{73803528-69F3-4017-BDE9-47E4CFD1AD6A}");
+		AZ_COMPONENT(DSPEffectComponent, DSPEffectComponentUUID, AZ::Component);
 
 		static void Reflect(AZ::ReflectContext* context);
 
@@ -34,6 +39,14 @@ namespace AlternativeAudio {
 		void SetSharedTag(AZStd::string tag);
 		bool GetShared();
 		AZStd::string GetSharedTag();
+		////////////////////////////////////////////////////////////////////////
+	protected:
+		////////////////////////////////////////////////////////////////////////
+		// DSPEffectCustomSlotComponentBus interface implementation
+		void UseCustomSlot(bool x);
+		bool IsUsingCustomSlot();
+		void SetSlot(unsigned long long slot);
+		unsigned long long GetSlot();
 		////////////////////////////////////////////////////////////////////////
 
 		////////////////////////////////////////////////////////////////////////
@@ -58,9 +71,14 @@ namespace AlternativeAudio {
 		AZStd::string m_tag;
 
 		bool m_checkButton;
+
+		long long m_slot;
+		bool m_customSlot;
 	private:
 		void CheckCrc();
 		void reloadDSP();
 		bool SharedVisibility() { return this->m_shared; }
+		bool CustomSlotVisibilty() { return this->m_customSlot; }
+		void resetCustomSlot();
 	};
 }

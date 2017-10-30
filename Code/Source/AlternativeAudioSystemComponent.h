@@ -105,7 +105,7 @@ namespace AlternativeAudio {
 		unsigned long long AddSharedEffectFreeSlot(AZStd::string tag, AADSPSection section, AZ::Crc32 crc, void* userdata);
 		AADSPEffect * GetEffect(AADSPSection section, unsigned long long slot) { return AADSPDeviceEffectHandler::GetEffect(section, slot); }
 		bool RemoveEffect(AADSPSection section, unsigned long long slot) { return AADSPDeviceEffectHandler::RemoveEffect(section, slot); }
-		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) { AADSPDeviceEffectHandler::ProcessEffects(section, format, buffer, len, flags); }
+		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAAttributeHandler * flags) { AADSPDeviceEffectHandler::ProcessEffects(section, format, buffer, len, flags); }
 		AADSPDeviceEffectHandler* GetDSPDeviceEffectHandler() { return (AADSPDeviceEffectHandler*)this; }
 	private: //AADSPEffect
 		using DSPLibMap = AZStd::unordered_map<AZ::Crc32, NewDSPEffectFunc>;
@@ -141,6 +141,8 @@ namespace AlternativeAudio {
 		bool IsPlaying(unsigned long long id);
 		AlternativeAudio::AudioSourceTime GetTime(unsigned long long id);
 		void SetTime(unsigned long long id, double time);
+		void UpdateAttribute(unsigned long long id, AZ::Crc32 idCrc, AlternativeAudio::AAAttribute* attr);
+		void ClearAttribute(unsigned long long id, AZ::Crc32 idCrc);
 		virtual void PauseAll();
 		virtual void ResumeAll();
 		virtual void StopAll();
@@ -191,6 +193,7 @@ namespace AlternativeAudio {
 			this->m_pSource->AddRef();
 			this->m_type = source->GetFrameType();
 			this->m_pSource->AddErrorHandler(this);
+			this->CopyAttributes(*source);
 		}
 		~IAudioSourceShared() {
 			this->m_pSource->RemoveErrorHandler(this);
@@ -239,11 +242,11 @@ namespace AlternativeAudio {
 		int GetDSPSection() { return this->m_pDSPEffect->GetDSPSection(); }
 		AADSPProcessType GetProcessType() { return this->m_pDSPEffect->GetProcessType(); }
 	public:
-		void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags) { this->m_pDSPEffect->Process(format, buffer, len, flags); }
-		void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags) { this->m_pDSPEffect->ProcessFrame(format, frame, flags); }
+		void Process(AudioFrame::Type format, float * buffer, long long len, AAAttributeHandler * attributes) { this->m_pDSPEffect->Process(format, buffer, len, attributes); }
+		void ProcessFrame(AudioFrame::Type format, float * frame, AAAttributeHandler * attributes) { this->m_pDSPEffect->ProcessFrame(format, frame, attributes); }
 	public:
-		operator AADSPEffect*() override { return this->m_pDSPEffect; }
-		virtual AADSPEffect* get() override { return this->m_pDSPEffect; }
+		operator AADSPEffect*() override { return this->m_pDSPEffect->get(); }
+		virtual AADSPEffect* get() override { return this->m_pDSPEffect->get(); }
 	private:
 		AADSPEffect* m_pDSPEffect;
 		AZStd::string m_tag;

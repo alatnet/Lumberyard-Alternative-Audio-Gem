@@ -27,7 +27,7 @@ namespace AlternativeAudio{
 			//this->m_mutex.unlock();
 		}
 
-        void VolumeDSPEffect::Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags){
+        void VolumeDSPEffect::Process(AudioFrame::Type format, float * buffer, long long len, AAAttributeHandler * attr){
 #		    define SET_BUFFERS(type) \
                 AlternativeAudio::AudioFrame::##type##* out = (AlternativeAudio::AudioFrame::##type##*)buffer;
 #			define SET_CHANNEL(channel) \
@@ -176,7 +176,7 @@ namespace AlternativeAudio{
 #			undef SET_CHANNEL
         }
 
-		void VolumeDSPEffect::ProcessFrame(AudioFrame::Type format, float* frame, AAFlagHandler * flags){
+		void VolumeDSPEffect::ProcessFrame(AudioFrame::Type format, float* frame, AAAttributeHandler * attr){
 #		    define SET_BUFFERS(type) \
                 AlternativeAudio::AudioFrame::##type##* out = (AlternativeAudio::AudioFrame::##type##*)frame;
 #			define SET_CHANNEL(channel) \

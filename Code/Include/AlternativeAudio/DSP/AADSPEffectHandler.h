@@ -4,7 +4,7 @@
 #include <AzCore\RTTI\RTTI.h>
 #include <AlternativeAudio\AAAudioFrame.h>
 #include <AlternativeAudio\DSP\AADSPEffect.h>
-#include <AlternativeAudio\AAFlagHandler.h>
+#include <AlternativeAudio\AAAttributeHandler.h>
 
 namespace AlternativeAudio {
 	//basic effect handler, useful for audio sources.
@@ -56,7 +56,7 @@ namespace AlternativeAudio {
 			return false; //no effect in that slot
 		}
 	protected:
-		void ProcessEffects(AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) {
+		void ProcessEffects(AudioFrame::Type format, float* buffer, long long len, AAAttributeHandler * flags) {
 			for (std::pair<unsigned long long, AADSPEffect *> effect : this->effects) {
 				switch (effect.second->GetProcessType()) {
 				case eDPT_Buffer:
@@ -190,7 +190,7 @@ namespace AlternativeAudio {
 			return false; //there is no dsp effect in slot specified
 		}
 	protected:
-		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAFlagHandler * flags) {
+		void ProcessEffects(AADSPSection section, AudioFrame::Type format, float* buffer, long long len, AAAttributeHandler * flags) {
 			int sectionInt = this->GetSection(section);
 			for (std::pair<unsigned long long, AADSPEffect *> effect : this->m_dspEffects[sectionInt]) {
 				switch (effect.second->GetProcessType()) {

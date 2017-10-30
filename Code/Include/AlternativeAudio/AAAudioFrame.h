@@ -470,7 +470,7 @@ namespace AlternativeAudio {
 		}
 	};
 
-	#define RESERVED_BIT(id,bit) eAF_Reserved##id = BIT64(##bit##)
+	/*#define RESERVED_BIT(id,bit) eAF_Reserved##id = BIT64(##bit##)
 	enum AASourceFlags {
 		eAF_None = 0,
 		eAF_Loop = BIT64(0),
@@ -483,11 +483,11 @@ namespace AlternativeAudio {
 		RESERVED_BIT(3, 7),
 		RESERVED_BIT(4, 8)
 	};
-	#undef RESERVED_BIT
+	#undef RESERVED_BIT*/
 }
 
 namespace AZ {
 	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AudioFrame::Type, "{3E6C2625-1D4B-4C84-99A8-C063ACB651EA}");
-	AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AASourceFlags, "{E298EE6D-F4D7-47E8-A413-4F959A4816A4}");
+	//AZ_TYPE_INFO_SPECIALIZE(AlternativeAudio::AASourceFlags, "{E298EE6D-F4D7-47E8-A413-4F959A4816A4}");
 }
 //#undef BIT

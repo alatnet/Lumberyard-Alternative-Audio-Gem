@@ -14,8 +14,8 @@ namespace AlternativeAudio{
 		public:
 			AZStd::string GetName() { return "AAInterlace"; }
 		public:
-			void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags);
-			void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags) {}
+			void Process(AudioFrame::Type format, float * buffer, long long len, AAAttributeHandler * attr);
+			void ProcessFrame(AudioFrame::Type format, float * frame, AAAttributeHandler * attr) {}
 		public:
 			int GetDSPSection() { return eDS_PerSource_BC | eDS_PerSource_AC | eDS_PerSource_ARS | eDS_Output; }
 			AADSPProcessType GetProcessType() { return eDPT_Buffer; }
@@ -37,8 +37,8 @@ namespace AlternativeAudio{
 		public:
 			AZStd::string GetName() { return "AADeinterlace"; }
 		public:
-			void Process(AudioFrame::Type format, float * buffer, long long len, AAFlagHandler * flags);
-			void ProcessFrame(AudioFrame::Type format, float * frame, AAFlagHandler * flags) {}
+			void Process(AudioFrame::Type format, float * buffer, long long len, AAAttributeHandler * attr);
+			void ProcessFrame(AudioFrame::Type format, float * frame, AAAttributeHandler * attr) {}
 		public:
 			int GetDSPSection() { return eDS_PerSource_BC | eDS_PerSource_AC | eDS_PerSource_ARS | eDS_Output; }
 			AADSPProcessType GetProcessType() { return eDPT_Buffer; }

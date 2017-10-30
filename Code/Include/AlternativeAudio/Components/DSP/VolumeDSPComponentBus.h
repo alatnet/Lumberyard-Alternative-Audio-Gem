@@ -8,8 +8,6 @@
 namespace AlternativeAudio {
 	namespace Components {
 		namespace DSP {
-			//const char * VolumeComponentUUID = "{73717A4F-CE6E-4917-811B-9350216F483E}";
-
 			class VolumeComponentEvents
 				: public AZ::EntityComponentBus {
 			public:
